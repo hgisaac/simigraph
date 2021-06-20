@@ -29,8 +29,8 @@ create_graph <- function(data_matrix) {
         weighted = TRUE)
 }
 
-define_weights <- function(simi_graph, max.tree, method, weori, seuil, mat.simi, minmaxeff,
-    coeff.vertex, cex, coeff.edge) {
+define_weights <- function(simi_graph, max.tree, method, weori, seuil, mat.simi,
+    minmaxeff, coeff.vertex, cex, coeff.edge) {
     
     if (max.tree) {
         if (method == 'cooc') {
@@ -98,29 +98,36 @@ define_weights <- function(simi_graph, max.tree, method, weori, seuil, mat.simi,
         label_cex = label.cex, we_width = we.width, we_label = we.label)
 }
 
-define_layout <- function() {
-    if (p.type=='rgl' || p.type=='rglweb') {
-        nd<-3
+define_layout <- function(p.type, layout.type, coords, simi_graph) {
+    if (p.type == 'rgl' || p.type == 'rglweb') {
+        nd <- 3
     } else {
-        nd<-2
+        nd <- 2
     }
 
     if (is.null(coords)) {
         if (layout.type == 'frutch')
-            lo <- layout.fruchterman.reingold(g.toplot,dim=nd)
+            lo <- igraph::layout.fruchterman.reingold(simi_graph, dim = nd)
+        
         if (layout.type == 'kawa')
-            lo <- layout.kamada.kawai(g.toplot,dim=nd)
+            lo <- igraph::layout.kamada.kawai(simi_graph, dim = nd)
+        
         if (layout.type == 'random')
-            lo <- layout.random(g.toplot,dim=nd)
+            lo <- igraph::layout.random(simi_graph, dim = nd)
+        
         if (layout.type == 'circle' & p.type != 'rgl')
-            lo <- layout.circle(g.toplot)
+            lo <- igraph::layout.circle(simi_graph)
+        
         if (layout.type == 'circle' & p.type == 'rgl')
-            lo <- layout.sphere(g.toplot)
+            lo <- igraph::layout.sphere(simi_graph)
+        
         if (layout.type == 'graphopt')
-            lo <- layout.graphopt(g.toplot)
+            lo <- igraph::layout.graphopt(simi_graph)
     } else {
         lo <- coords
     }
+
+    lo
 }
 
 define_communities <- function() {
@@ -153,16 +160,9 @@ do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
     
     weights_definition <- define_weights(simi_graph, max.tree, method, weori,
         seuil, x$mat, minmaxeff, coeff.vertex, cex, coeff.edge)
-    
-    simi_graph <- weights_definition$simi_graph
-    elim <- weights_definition$elim
-    vertices_labels <- weights_definition$vertices_labels
-    eff <- weights_definition$eff
-    label_cex <- weights_definition$label_cex
-    we_width <- weights_definition$we_width
-    we_label <- weights_definition$we_label
-    
-    define_layout()
+
+    graph_layout <- define_layout(p.type, layout.type, coords,
+        weights_definition$simi_graph)
 
     if (communities) {
         define_communities()
@@ -170,9 +170,11 @@ do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
         com <- NULL
     }
     
-    list(graph = simi_graph, mat.eff = x$eff, eff = eff, mat = x$mat,
-        v.label = vertices_labels, we.width = we_width, we.label = we_label,
-        label.cex = label_cex, layout = lo, communities = com, halo = halo, elim = elim)
+    list(graph = simi_graph, mat.eff = x$eff, eff = weights_definition$eff,
+        mat = x$mat, v.label = weights_definition$vertices_labels,
+        we.width = weights_definition$we_width, we.label = weights_definition$we_label,
+        label.cex = weights_definition$label_cex, layout = graph_layout,
+        communities = com, halo = halo, elim = weights_definition$elim)
 }
 
 plot.simi <- function(graph.simi, p.type = 'tkplot',filename = NULL, communities = NULL,
