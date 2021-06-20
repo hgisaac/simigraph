@@ -130,24 +130,26 @@ define_layout <- function(p.type, layout.type, coords, simi_graph) {
     lo
 }
 
-define_communities <- function() {
-    if (communities == 0 ){ #'edge.betweenness.community') {
-        com <- edge.betweenness.community(g.toplot)
+define_communities <- function(communities, simi_graph) {
+    if (communities == 0 ){
+        graph_communities <- igraph::edge.betweenness.community(simi_graph)
     } else if (communities == 1) {
-        com <- fastgreedy.community(g.toplot)
+        graph_communities <- igraph::fastgreedy.community(simi_graph)
     } else if (communities == 2) {
-        com <- label.propagation.community(g.toplot)
+        graph_communities <- igraph::label.propagation.community(simi_graph)
     } else if (communities == 3) {
-        com <- leading.eigenvector.community(g.toplot)
+        graph_communities <- igraph::leading.eigenvector.community(simi_graph)
     } else if (communities == 4) {
-        com <- multilevel.community(g.toplot)
+        graph_communities <- igraph::multilevel.community(simi_graph)
     } else if (communities == 5) {
-        com <- optimal.community(g.toplot)
+        graph_communities <- igraph::optimal.community(simi_graph)
     } else if (communities == 6) {
-        com <- spinglass.community(g.toplot)
+        graph_communities <- igraph::spinglass.community(simi_graph)
     } else if (communities == 7) {
-        com <- walktrap.community(g.toplot)
+        graph_communities <- igraph::walktrap.community(simi_graph)
     }
+
+    graph_communities
 }
 
 do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
@@ -165,16 +167,17 @@ do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
         weights_definition$simi_graph)
 
     if (communities) {
-        define_communities()
+        graph_communities <- define_communities(communities,
+            weights_definition$simi_graph)
     } else {
-        com <- NULL
+        graph_communities <- NULL
     }
     
-    list(graph = simi_graph, mat.eff = x$eff, eff = weights_definition$eff,
+    list(graph = weights_definition$simi_graph, mat.eff = x$eff, eff = weights_definition$eff,
         mat = x$mat, v.label = weights_definition$vertices_labels,
         we.width = weights_definition$we_width, we.label = weights_definition$we_label,
         label.cex = weights_definition$label_cex, layout = graph_layout,
-        communities = com, halo = halo, elim = weights_definition$elim)
+        communities = graph_communities, halo = halo, elim = weights_definition$elim)
 }
 
 plot.simi <- function(graph.simi, p.type = 'tkplot',filename = NULL, communities = NULL,
