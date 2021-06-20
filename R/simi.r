@@ -30,7 +30,7 @@ create_graph <- function(data_matrix) {
 }
 
 define_weights <- function(simi_graph, max.tree, method, weori, seuil, mat.simi,
-    minmaxeff, coeff.vertex, cex, coeff.edge) {
+    minmaxeff, vcexminmax, coeff.vertex, cex, coeff.edge, mat.eff) {
     
     if (max.tree) {
         if (method == 'cooc') {
@@ -95,7 +95,7 @@ define_weights <- function(simi_graph, max.tree, method, weori, seuil, mat.simi,
     }
 
     list(simi_graph = g.toplot, elim = vec, vertices_labels = v.label, eff = eff,
-        label_cex = label.cex, we_width = we.width, we_label = we.label)
+        label_cex = label.cex, we_width = we.width, we_label = we.label, mat_eff = mat.eff)
 }
 
 define_layout <- function(p.type, layout.type, coords, simi_graph) {
@@ -161,23 +161,23 @@ do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
     weori <- igraph::get.edge.attribute(simi_graph, 'weight')
     
     weights_definition <- define_weights(simi_graph, max.tree, method, weori,
-        seuil, x$mat, minmaxeff, coeff.vertex, cex, coeff.edge)
+        seuil, x$mat, minmaxeff, vcexminmax, coeff.vertex, cex, coeff.edge, x$eff)
 
     graph_layout <- define_layout(p.type, layout.type, coords,
         weights_definition$simi_graph)
 
-    if (communities) {
+    if (!is.null(communities)) {
         graph_communities <- define_communities(communities,
             weights_definition$simi_graph)
     } else {
         graph_communities <- NULL
     }
     
-    list(graph = weights_definition$simi_graph, mat.eff = x$eff, eff = weights_definition$eff,
-        mat = x$mat, v.label = weights_definition$vertices_labels,
-        we.width = weights_definition$we_width, we.label = weights_definition$we_label,
-        label.cex = weights_definition$label_cex, layout = graph_layout,
-        communities = graph_communities, halo = halo, elim = weights_definition$elim)
+    list(graph = weights_definition$simi_graph, mat.eff = weights_definition$mat_eff,
+        eff = weights_definition$eff, mat = x$mat, halo = halo, layout = graph_layout,
+        v.label = weights_definition$vertices_labels, we.width = weights_definition$we_width,
+        we.label = weights_definition$we_label, communities = graph_communities,
+        label.cex = weights_definition$label_cex, elim = weights_definition$elim)
 }
 
 plot.simi <- function(graph.simi, p.type = 'tkplot',filename = NULL, communities = NULL,
