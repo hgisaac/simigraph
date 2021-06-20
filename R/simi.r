@@ -24,18 +24,13 @@
 # Yule a, b, c, d  (ad - bc) / (ad + bc)
 # Yule2  a, b, c, d  (sqrt(ad) - sqrt(bc)) / (sqrt(ad) + sqrt(bc))
 
-do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
-    layout.type = 'frutch', max.tree = TRUE, coeff.vertex = NULL, coeff.edge = NULL,
-    minmaxeff = NULL, vcexminmax = NULL, cex = 1, coords = NULL, communities = NULL,
-    halo = FALSE) {
-	
-    mat.simi <- x$mat
-    mat.eff <- x$eff
-    v.label <- colnames(mat.simi)
-	g1<-graph.adjacency(mat.simi,mode="lower",weighted=TRUE)
-	g.toplot<-g1
-	weori<-get.edge.attribute(g1,'weight')
-	if (max.tree) {
+create_graph <- function(data_matrix) {
+    graph <- igraph::graph_from_adjacency_matrix(data_matrix, mode = 'lower',
+        weighted = TRUE)
+}
+
+define_weights <- function(graph) {
+    if (max.tree) {
         if (method == 'cooc') {
 		    invw <- 1 / weori
         } else {
@@ -90,14 +85,18 @@ do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
     } else {
         we.label <- round(E(g.toplot)$weight,3)
     }
-	if (p.type=='rgl' || p.type=='rglweb') {
+}
+
+define_layout <- function() {
+    if (p.type=='rgl' || p.type=='rglweb') {
         nd<-3
     } else {
         nd<-2
     }
+
     if (is.null(coords)) {
     	if (layout.type == 'frutch')
-    		lo <- layout.fruchterman.reingold(g.toplot,dim=nd)#, weightsA=E(g.toplot)$weight)
+    		lo <- layout.fruchterman.reingold(g.toplot,dim=nd)
     	if (layout.type == 'kawa')
     		lo <- layout.kamada.kawai(g.toplot,dim=nd)
     	if (layout.type == 'random')
@@ -111,31 +110,53 @@ do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
     } else {
         lo <- coords
     }
-    if (!is.null(communities)) {
-        if (communities == 0 ){ #'edge.betweenness.community') {
-            com <- edge.betweenness.community(g.toplot)
-        } else if (communities == 1) {
-            com <- fastgreedy.community(g.toplot)
-        } else if (communities == 2) {
-            com <- label.propagation.community(g.toplot)
-        } else if (communities == 3) {
-            com <- leading.eigenvector.community(g.toplot)
-        } else if (communities == 4) {
-            com <- multilevel.community(g.toplot)
-        } else if (communities == 5) {
-            com <- optimal.community(g.toplot)
-        } else if (communities == 6) {
-            com <- spinglass.community(g.toplot)
-        } else if (communities == 7) {
-            com <- walktrap.community(g.toplot)
-        } 
+}
+
+define_communities <- function() {
+    if (communities == 0 ){ #'edge.betweenness.community') {
+        com <- edge.betweenness.community(g.toplot)
+    } else if (communities == 1) {
+        com <- fastgreedy.community(g.toplot)
+    } else if (communities == 2) {
+        com <- label.propagation.community(g.toplot)
+    } else if (communities == 3) {
+        com <- leading.eigenvector.community(g.toplot)
+    } else if (communities == 4) {
+        com <- multilevel.community(g.toplot)
+    } else if (communities == 5) {
+        com <- optimal.community(g.toplot)
+    } else if (communities == 6) {
+        com <- spinglass.community(g.toplot)
+    } else if (communities == 7) {
+        com <- walktrap.community(g.toplot)
+    }
+}
+
+do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
+    layout.type = 'frutch', max.tree = TRUE, coeff.vertex = NULL, coeff.edge = NULL,
+    minmaxeff = NULL, vcexminmax = NULL, cex = 1, coords = NULL, communities = NULL,
+    halo = FALSE) {
+	
+    mat.simi <- x$mat
+    mat.eff <- x$eff
+    v.label <- colnames(mat.simi)
+	g1 <- create_graph(mat.simi)
+	g.toplot <- g1
+	weori <- get.edge.attribute(g1, 'weight')
+	
+    define_weights()
+    
+	define_layout()
+
+    if (communities) {
+        define_communities()
     } else {
         com <- NULL
     }
     
 	list(graph = g.toplot, mat.eff = mat.eff, eff = eff, mat = mat.simi,
-        v.label = v.label, we.width = we.width, we.label=we.label, label.cex = label.cex,
-        layout = lo, communities = com, halo = halo, elim=vec)
+        v.label = v.label, we.width = we.width, we.label = we.label, label.cex = label.cex,
+        layout = lo, communities = com, halo = halo, elim = vec)
 }
 
 plot.simi <- function(graph.simi, p.type = 'tkplot',filename = NULL, communities = NULL,
