@@ -150,7 +150,7 @@ check.word.parameter <- function(parameters, sparse, matrix.data, index) {
 
 create.sparse <- function(parameters, matrix.data) {
     if (parameters$method == 'cooc') {
-        sparse <- t(matrix.data) %*% matrix.data
+        sparse <- t(as.matrix(matrix.data)) %*% matrix.data
 
     } else if (parameters$method == 'Russel') {
         sparse <- proxy::simil(matrix.data, method = parameters$method, diag = TRUE,
@@ -218,7 +218,7 @@ generate.graph <- function(parameters, analysis.path) {
     valid.data <- check.word.parameter(parameters, sparse, selection$matrix,
         selection$index)
 
-    eff <- colSums(valid.data$matrix)
+    eff <- colSums(as.matrix(valid.data$matrix))
     x <- list(mat = valid.data$sparse, eff = eff)
 
     do.simi(

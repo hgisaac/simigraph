@@ -64,7 +64,7 @@ apply.chd <- function(parameters, dm) {
         chi.vertex.size = chi.vertex.size)
 }
 
-apply.plot.definitions <- function(parameters) {
+apply.plot.definitions <- function(parameters, graph.simi) {
     vertex.label.color <- 'black'
     chi.vertex.size <- 1
     leg <- NULL
@@ -128,7 +128,7 @@ plot.graph <- function(graph.simi, parameters, ...) {
             vertex.size <- NULL
         }
     } else {
-        plot.definitions <- apply.plot.definitions(parameters)
+        plot.definitions <- apply.plot.definitions(parameters, graph.simi)
         vertex.size <- plot.definitions$vertex.size
         leg <- plot.definitions$leg
         label.cex <- plot.definitions$chi.vertex.size
