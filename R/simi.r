@@ -29,8 +29,10 @@ create_graph <- function(data_matrix) {
         weighted = TRUE)
 }
 
-define_weights <- function(simi_graph, max.tree, method, weori, seuil, mat.simi,
+define_weights <- function(simi_graph, max.tree, method, seuil, mat.simi,
     minmaxeff, vcexminmax, coeff.vertex, cex, coeff.edge, mat.eff) {
+    
+    weori <- igraph::get.edge.attribute(simi_graph, 'weight')
     
     if (max.tree) {
         if (method == 'cooc') {
@@ -67,6 +69,7 @@ define_weights <- function(simi_graph, max.tree, method, weori, seuil, mat.simi,
 
         if (!is.logical(vec)) mat.eff <- mat.eff[-vec]
     } else {
+        v.label <- NULL
         vec <- NULL
     }
 
@@ -158,9 +161,8 @@ do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
     halo = FALSE) {
     
     simi_graph <- create_graph(x$mat)
-    weori <- igraph::get.edge.attribute(simi_graph, 'weight')
     
-    weights_definition <- define_weights(simi_graph, max.tree, method, weori,
+    weights_definition <- define_weights(simi_graph, max.tree, method,
         seuil, x$mat, minmaxeff, vcexminmax, coeff.vertex, cex, coeff.edge, x$eff)
 
     graph_layout <- define_layout(p.type, layout.type, coords,
