@@ -39,13 +39,13 @@ define_weights <- function(simi_graph, max.tree, method, weori, seuil, mat.simi,
             invw <- 1 - weori
         }
 
-        E(simi_graph)$weight <- invw
+        igraph::E(simi_graph)$weight <- invw
         g.toplot <- igraph::minimum.spanning.tree(simi_graph)
         
         if (method == 'cooc') {
-            E(g.toplot)$weight <- 1 / E(g.toplot)$weight
+            igraph::E(g.toplot)$weight <- 1 / igraph::E(g.toplot)$weight
         } else {
-            E(g.toplot)$weight <- 1 - E(g.toplot)$weight
+            igraph::E(g.toplot)$weight <- 1 - igraph::E(g.toplot)$weight
         }
     }
 
@@ -53,17 +53,17 @@ define_weights <- function(simi_graph, max.tree, method, weori, seuil, mat.simi,
         if (seuil >= max(mat.simi)) seuil <- 0
         
         vec <- vector()
-        tovire <- which(E(g.toplot)$weight <= seuil)
+        tovire <- which(igraph::E(g.toplot)$weight <= seuil)
         g.toplot <- igraph::delete.edges(g.toplot, tovire)
         
-        for (i in 1:(length(V(g.toplot)))) {
+        for (i in 1:(length(igraph::V(g.toplot)))) {
             if (length(igraph::neighbors(g.toplot, i)) == 0) {
                 vec <- append(vec, i)
             }
         }
 
         g.toplot <- igraph::delete.vertices(g.toplot, vec)
-        v.label <- V(g.toplot)$name
+        v.label <- igraph::V(g.toplot)$name
 
         if (!is.logical(vec)) mat.eff <- mat.eff[-vec]
     } else {
@@ -83,15 +83,15 @@ define_weights <- function(simi_graph, max.tree, method, weori, seuil, mat.simi,
     }
 
     if (!is.null(coeff.edge)) {
-        we.width <- norm.vec(abs(E(g.toplot)$weight), coeff.edge[1], coeff.edge[2])
+        we.width <- norm.vec(abs(igraph::E(g.toplot)$weight), coeff.edge[1], coeff.edge[2])
     } else {
         we.width <- NULL
     }
 
     if (method != 'binom') {
-        we.label <- round(E(g.toplot)$weight, 2)
+        we.label <- round(igraph::E(g.toplot)$weight, 2)
     } else {
-        we.label <- round(E(g.toplot)$weight, 3)
+        we.label <- round(igraph::E(g.toplot)$weight, 3)
     }
 
     list(simi_graph = g.toplot, elim = vec, vertices_labels = v.label, eff = eff,
@@ -255,7 +255,7 @@ plot.simi <- function(graph.simi, p.type = 'tkplot',filename = NULL, communities
                 vertex.label.cex = 0, layout=lo, mark.groups = mark.groups, edge.curved=edge.curved)
         }
         #txt.layout <- lo
-        txt.layout <- layout.norm(lo, -1, 1, -1, 1, -1, 1)
+        txt.layout <- igraph::layout.norm(lo, -1, 1, -1, 1, -1, 1)
         #txt.layout <- txt.layout[order(label.cex),]
         #vertex.label.color <- vertex.label.color[order(label.cex)]
         #v.label <- v.label[order(label.cex)]

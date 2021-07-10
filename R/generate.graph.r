@@ -1,9 +1,3 @@
-library('igraph')
-library('proxy')
-library('Matrix')
-
-source('R/simi.r', encoding = 'utf8')
-
 norm.vec <- function(vector, min, max) {
   vector.range <- range(vector)
 
