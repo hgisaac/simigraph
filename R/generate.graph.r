@@ -151,7 +151,7 @@ create.sparse <- function(parameters, matrix.data) {
             upper = TRUE, by_rows = FALSE)
 
     } else if (parameters$method == 'binomial') {
-        sparse <- binom.sim(matrix.data)
+        sparse <- binom_sim(matrix.data)
 
     } else {
         matrix.data <- as.matrix(matrix.data)
@@ -215,7 +215,7 @@ generate.graph <- function(parameters, analysis.path) {
     eff <- colSums(as.matrix(valid.data$matrix))
     x <- list(mat = valid.data$sparse, eff = eff)
 
-    do.simi(
+    do_simi(
         x,
         method = parameters$method,
         seuil = parameters$seuil,

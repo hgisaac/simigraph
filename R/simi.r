@@ -155,7 +155,7 @@ define_communities <- function(communities, simi_graph) {
     graph_communities
 }
 
-do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
+do_simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
     layout.type = 'frutch', max.tree = TRUE, coeff.vertex = NULL, coeff.edge = NULL,
     minmaxeff = NULL, vcexminmax = NULL, cex = 1, coords = NULL, communities = NULL,
     halo = FALSE) {
@@ -182,151 +182,180 @@ do.simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
         label.cex = weights_definition$label_cex, elim = weights_definition$elim)
 }
 
-plot.simi <- function(graph.simi, p.type = 'tkplot',filename = NULL, communities = NULL,
-    vertex.col = 'red', edge.col = 'black', edge.label = TRUE, vertex.label = TRUE,
-    vertex.label.color = 'black', vertex.label.cex= NULL, vertex.size=NULL, leg = NULL,
-    width = 800, height = 800, alpha = 0.1, cexalpha = FALSE, movie = NULL,
-    edge.curved = TRUE, svg = FALSE, bg = 'white') {
+define_vertex_label_color <- function(vertex_label_cex, vertex_label_color) {
+    alphas <- norm.vec(vertex_label_cex, 0.5, 1)
+    new_vertex_label_color <- c()
     
-    mat.simi <- graph.simi$mat
-    g.toplot <- graph.simi$graph
-    if (is.null(vertex.size)) {
-        vertex.size <- graph.simi$eff
+    if (length(vertex_label_color) == 1) {
+        for (i in 1:length(alphas)) {
+            new_vertex_label_color <- append(new_vertex_label_color,
+                adjustcolor(vertex_label_color, alpha = alphas[i]))
+        }
     } else {
-        vertex.size <- vertex.size
-    }
-    we.width <- graph.simi$we.width
-    if (vertex.label) {
-        #v.label <- vire.nonascii(graph.simi$v.label)
-        v.label <- graph.simi$v.label
-    } else {
-        v.label <- NA
-    }
-    if (edge.label) {
-        we.label <- graph.simi$we.label
-    } else {
-        we.label <- NA
-    }
-    lo <- graph.simi$layout
-    if (!is.null(vertex.label.cex)) {
-        label.cex<-vertex.label.cex
-    } else {
-        label.cex = graph.simi$label.cex
-    }
-    if (cexalpha) {
-        alphas <- norm.vec(label.cex, 0.5,1)
-        nvlc <- NULL
-        if (length(vertex.label.color) == 1) {
-            for (i in 1:length(alphas)) {
-             nvlc <- append(nvlc, adjustcolor(vertex.label.color, alpha=alphas[i]))
-            }
-        } else {
-            for (i in 1:length(alphas)) {
-                nvlc <- append(nvlc, adjustcolor(vertex.label.color[i], alpha=alphas[i]))
-            }
+        for (i in 1:length(alphas)) {
+            new_vertex_label_color <- append(new_vertex_label_color,
+                adjustcolor(vertex_label_color[i], alpha = alphas[i]))
         }
-        vertex.label.color <- nvlc  
     }
-    if (p.type=='nplot') {
-        #print('ATTENTION - PAS OPEN FILE')
-        open_file_graph(filename, width = width, height = height, svg = svg)
-        par(mar=c(2,2,2,2))
-        par(bg=bg)
-        
-        if (!is.null(leg)) {
-            layout(matrix(c(1,2),1,2, byrow=TRUE),widths=c(3,lcm(7)))
-            par(mar=c(2,2,1,0))
-        }
 
-        par(pch=' ')
-
-        if (is.null(graph.simi$com)) {
-            plot(g.toplot, vertex.label = '', edge.width = we.width, vertex.size = vertex.size,
-                vertex.color = vertex.col, vertex.label.color = 'white', edge.label = we.label,
-                edge.label.cex = label.cex, edge.color = edge.col, vertex.label.cex = 0,
-                layout = lo, edge.curved = edge.curved)
-        } else {
-            if (graph.simi$halo) {
-                mark.groups <- communities(graph.simi$com)
-            } else {
-                mark.groups <- NULL
-            }
-            plot(graph.simi$com, g.toplot,vertex.label = '', edge.width = we.width,
-                vertex.size = vertex.size, vertex.color=vertex.col, vertex.label.color='white',
-                edge.label=we.label, edge.label.cex=label.cex, edge.color=edge.col,
-                vertex.label.cex = 0, layout=lo, mark.groups = mark.groups, edge.curved=edge.curved)
-        }
-        #txt.layout <- lo
-        txt.layout <- igraph::layout.norm(lo, -1, 1, -1, 1, -1, 1)
-        #txt.layout <- txt.layout[order(label.cex),]
-        #vertex.label.color <- vertex.label.color[order(label.cex)]
-        #v.label <- v.label[order(label.cex)]
-        #label.cex <- label.cex[order(label.cex)]
-        text(txt.layout[,1], txt.layout[,2], v.label, cex=label.cex, col=vertex.label.color)
-        if (!is.null(leg)) {
-            par(mar=c(0,0,0,0))
-            plot(0, axes = FALSE, pch = '')
-            legend(x = 'center' , leg$unetoile, fill = leg$gcol)
-        }
-        dev.off()
-        return(lo)
-    }
-    if (p.type=='tkplot') {
-        id <- tkplot(g.toplot,vertex.label=v.label, edge.width=we.width, vertex.size=vertex.size,
-            vertex.color=vertex.col, vertex.label.color=vertex.label.color, edge.label=we.label,
-            edge.color=edge.col, layout=lo)
-
-        coords <- tkplot.getcoords(id)
-        ok <- try(coords <- tkplot.getcoords(id), TRUE)
-        while (is.matrix(ok)) {
-            ok <- try(coords <- tkplot.getcoords(id), TRUE)
-            Sys.sleep(0.5)
-        }
-    tkplot.off()
-    return(coords)
-    }
-    
-    if (p.type == 'rgl' || p.type == 'rglweb') {
-        library('rgl')
-        #rgl.open()
-        #par3d(cex=0.8)
-        lo <- layout.norm(lo, -10, 10, -10, 10, -10, 10)
-        bg3d('white')
-        rglplot(g.toplot,vertex.label='', edge.width=we.width/10, vertex.size=0.01,
-            vertex.color=vertex.col, vertex.label.color="black", edge.color = edge.col,
-            layout=lo, rescale = FALSE)
-        
-        text3d(lo[,1], lo[,2], lo[,3], vire.nonascii(v.label), col = vertex.label.color,
-            alpha = 1, cex = vertex.label.cex)
-
-        rgl.spheres(lo, col = vertex.col, radius = vertex.size/100, alpha = alpha)
-        #rgl.bg(color = c('white','black'))
-        #bg3d('white')
-        if (!is.null(movie)) {
-            require(tcltk)
-            ReturnVal <- tkmessageBox(title="RGL 3 D", message = "Cliquez pour commencer le film",
-                icon="info",type="ok")
-
-            movie3d(spin3d(axis=c(0,1,0),rpm=6), movie = 'film_graph', frames = "tmpfilm",
-                duration=10, clean=TRUE, top = TRUE, dir = movie)
-
-            ReturnVal <- tkmessageBox(title="RGL 3 D",message="Film fini !",
-                icon="info",type="ok")
-        }
-        
-        if (p.type == 'rglweb') {
-            writeWebGL(dir = filename, width = width, height= height)
-        } else {
-            require(tcltk)
-            ReturnVal <- tkmessageBox(title="RGL 3 D",message="Cliquez pour fermer",
-                icon="info",type="ok")
-        }
-
-        rgl.close()
-    }
+    new_vertex_label_color
 }
 
-make.bin <- function(cs, a, i, j, nb) {
+n_plot <- function(filename, width, height, svg, bg, leg, graph_simi, vertex.size,
+    vertex.color, label.cex, edge.color, edge.curved, vertex_label_color) {
+    
+    open_file_graph(filename, width = width, height = height, svg = svg)
+    par(mar = c(2, 2, 2, 2))
+    par(bg = bg)
+    
+    if (!is.null(leg)) {
+        layout(matrix(c(1, 2), 1, 2, byrow = TRUE), widths = c(3, lcm(7)))
+        par(mar = c(2, 2, 1, 0))
+    }
+
+    par(pch = ' ')
+
+    if (is.null(graph_simi$com)) {
+        plot(
+            graph_simi$graph,
+            vertex.label = '',
+            edge.width = graph_simi$we.width,
+            vertex.size = vertex.size,
+            vertex.color = vertex.color,
+            vertex.label.color = 'white',
+            edge.label = graph_simi$we.label,
+            edge.label.cex = label.cex,
+            edge.color = edge.color,
+            vertex.label.cex = 0,
+            layout = graph_simi$layout,
+            edge.curved = edge.curved
+        )
+    } else {
+        if (graph_simi$halo) {
+            mark.groups <- communities(graph_simi$com)
+        } else {
+            mark.groups <- NULL
+        }
+
+        plot(
+            graph_simi$com,
+            graph_simi$graph,
+            vertex.label = '',
+            edge.width = graph_simi$we.width,
+            vertex.size = vertex.size,
+            vertex.color = vertex.color,
+            vertex.label.color = 'white',
+            edge.label = graph_simi$we.label,
+            edge.label.cex = label.cex,
+            edge.color = edge.color,
+            vertex.label.cex = 0,
+            layout = graph_simi$layout,
+            mark.groups = mark.groups,
+            edge.curved = edge.curved
+        )
+    }
+    
+    txt.layout <- igraph::layout.norm(graph_simi$layout, -1, 1, -1, 1, -1, 1)
+    text(
+        txt.layout[, 1],
+        txt.layout[, 2],
+        graph_simi$v.label,
+        cex = label.cex,
+        col = vertex_label_color
+    )
+    
+    if (!is.null(leg)) {
+        par(mar = c(0, 0, 0, 0))
+        plot(0, axes = FALSE, pch = '')
+        legend(x = 'center', leg$unetoile, fill = leg$gcol)
+    }
+    
+    dev.off()
+    graph_simi$layout
+}
+
+tk_plot <- function(graph_simi, vertex.size, vertex.color, vertex_label_color,
+    edge.color) {
+    
+    id <- tkplot(
+        graph_simi$graph,
+        vertex.label = graph_simi$v.label,
+        edge.width = graph_simi$we.width,
+        vertex.size = vertex.size,
+        vertex.color = vertex.color,
+        vertex.label.color = vertex_label_color,
+        edge.label = graph_simi$we.label,
+        edge.color = edge.color,
+        layout = graph_simi$layout
+    )
+
+    coords <- tkplot.getcoords(id)
+    ok <- try(
+        coords <- tkplot.getcoords(id),
+        TRUE
+    )
+    
+    while (is.matrix(ok)) {
+        ok <- try(
+            coords <- tkplot.getcoords(id),
+            TRUE
+        )
+        Sys.sleep(0.5)
+    }
+    
+    tkplot.off()
+    coords
+}
+
+plot_simi <- function(graph.simi, p.type = 'tkplot', filename = NULL,
+    communities = NULL, vertex.color = 'red', edge.color = 'black',
+    vertex.label.color = 'black', vertex.label.cex = NULL, vertex.size = NULL,
+    leg = NULL, width = 800, height = 800, alpha = 0.1, cexalpha = FALSE,
+    movie = NULL, edge.curved = TRUE, svg = FALSE, bg = 'white') {
+
+    if (!is.null(vertex.label.cex)) {
+        label.cex <- vertex.label.cex
+    } else {
+        label.cex <- graph.simi$label.cex
+    }
+
+    if (cexalpha) {
+        vertex.label.color <- define_vertex_label_color(label.cex, vertex.label.color)
+    }
+
+    if (is.null(vertex.size)) {
+        vertex.size <- graph.simi$eff
+    }
+
+    if (p.type == 'nplot') {
+        plot_result <- n_plot(
+            filename,
+            width,
+            height,
+            svg,
+            bg,
+            leg,
+            graph.simi,
+            vertex.size,
+            vertex.color,
+            label.cex,
+            edge.color,
+            edge.curved,
+            vertex.label.color
+        )
+    } else if (p.type == 'tkplot') {
+        plot_result <- tk_plot(
+            graph.simi,
+            vertex.size,
+            vertex.color,
+            vertext.label.color,
+            edge.color
+        )
+    }
+    plot_result
+}
+
+make_bin <- function(cs, a, i, j, nb) {
     if (a[i, j] >= 1) {
         ab <- a[i, j] - 1 
         res <- binom.test(ab, nb, (cs[i]/nb) * (cs[j]/nb), "less")
@@ -338,7 +367,7 @@ make.bin <- function(cs, a, i, j, nb) {
     res$p.value
 }
 
-binom.sim <- function(x) {
+binom_sim <- function(x) {
     a <- t(x) %*% (x)
     n <- nrow(x)
     cs <- colSums(x)
@@ -347,7 +376,7 @@ binom.sim <- function(x) {
     rownames(mat)<-rownames(a)
     for (i in 1:(ncol(x)-1)) {
         for (j in (i+1):ncol(x)) {
-            mat[j,i] <- make.bin(cs, a, i, j , n)
+            mat[j,i] <- make_bin(cs, a, i, j , n)
         }
     }
 

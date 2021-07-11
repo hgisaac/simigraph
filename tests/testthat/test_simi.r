@@ -4,5 +4,5 @@ test_that('create_graph returns igraph object', {
 })
 
 test_that('do.simi is a closure', {
-    expect_type(do.simi, 'closure')
+    expect_type(do_simi, 'closure')
 })

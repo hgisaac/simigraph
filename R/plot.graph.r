@@ -146,16 +146,14 @@ plot.graph <- function(graph.simi, parameters, ...) {
         }
     }
 
-    coords <- plot.simi(
+    coords <- plot_simi(
         graph.simi,
         ...,
-        vertex.label = parameters$label.v,
-        edge.label = parameters$label.e,
-        vertex.col = parameters$cols,
+        vertex.color = parameters$cols,
         vertex.label.color = vertex.label.color,
         vertex.label.cex = label.cex,
         vertex.size = vertex.size,
-        edge.col = parameters$cola,
+        edge.color = parameters$cola,
         leg = leg,
         alpha = parameters$alpha,
         edge.curved = parameters$edge.curved,
