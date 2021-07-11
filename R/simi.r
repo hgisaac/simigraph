@@ -97,69 +97,75 @@ define_weights <- function(simi_graph, max.tree, method, seuil, mat.simi,
         we.label <- round(igraph::E(g.toplot)$weight, 3)
     }
 
-    list(simi_graph = g.toplot, elim = vec, vertices_labels = v.label, eff = eff,
-        label_cex = label.cex, we_width = we.width, we_label = we.label, mat_eff = mat.eff)
+    list(
+        simi_graph = g.toplot,
+        elim = vec,
+        vertices_labels = v.label,
+        eff = eff,
+        label_cex = label.cex,
+        we_width = we.width,
+        we_label = we.label,
+        mat_eff = mat.eff
+    )
 }
 
 define_layout <- function(p.type, layout.type, coords, simi_graph) {
-    if (p.type == 'rgl' || p.type == 'rglweb') {
-        nd <- 3
-    } else {
-        nd <- 2
-    }
+    layout_types <- list(
+        frutch = igraph::layout.fruchterman.reingold,
+        kawa = igraph::layout.kamada.kawai,
+        random = igraph::layout.random,
+        circle = igraph::layout.circle,
+        graphopt = igraph::layout.graphopt
+    )
 
     if (is.null(coords)) {
-        if (layout.type == 'frutch')
-            lo <- igraph::layout.fruchterman.reingold(simi_graph, dim = nd)
-        
-        if (layout.type == 'kawa')
-            lo <- igraph::layout.kamada.kawai(simi_graph, dim = nd)
-        
-        if (layout.type == 'random')
-            lo <- igraph::layout.random(simi_graph, dim = nd)
-        
-        if (layout.type == 'circle' & p.type != 'rgl')
-            lo <- igraph::layout.circle(simi_graph)
-        
-        if (layout.type == 'circle' & p.type == 'rgl')
-            lo <- igraph::layout.sphere(simi_graph)
-        
-        if (layout.type == 'graphopt')
-            lo <- igraph::layout.graphopt(simi_graph)
+        layout_function <- layout_types[[layout.type]]
+
+        if (!is.null(layout_function)) {
+            defined_layout <- layout_function(simi_graph)
+        }
     } else {
-        lo <- coords
+        defined_layout <- coords
     }
 
-    lo
+    defined_layout
 }
 
 define_communities <- function(communities, simi_graph) {
-    if (communities == 0 ){
-        graph_communities <- igraph::edge.betweenness.community(simi_graph)
-    } else if (communities == 1) {
-        graph_communities <- igraph::fastgreedy.community(simi_graph)
-    } else if (communities == 2) {
-        graph_communities <- igraph::label.propagation.community(simi_graph)
-    } else if (communities == 3) {
-        graph_communities <- igraph::leading.eigenvector.community(simi_graph)
-    } else if (communities == 4) {
-        graph_communities <- igraph::multilevel.community(simi_graph)
-    } else if (communities == 5) {
-        graph_communities <- igraph::optimal.community(simi_graph)
-    } else if (communities == 6) {
-        graph_communities <- igraph::spinglass.community(simi_graph)
-    } else if (communities == 7) {
-        graph_communities <- igraph::walktrap.community(simi_graph)
-    }
+    communities_types <- c(
+        igraph::edge.betweenness.community,
+        igraph::fastgreedy.community,
+        igraph::label.propagation.community,
+        igraph::leading.eigenvector.community,
+        igraph::multilevel.community,
+        igraph::optimal.community,
+        igraph::spinglass.community,
+        igraph::walktrap.community
+    )
 
-    graph_communities
+    communities_function <- communities_types[communities]
+    
+    if (!is.null(communities_function)) {
+        communities_function(simi_graph)
+    }
 }
 
-do_simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
-    layout.type = 'frutch', max.tree = TRUE, coeff.vertex = NULL, coeff.edge = NULL,
-    minmaxeff = NULL, vcexminmax = NULL, cex = 1, coords = NULL, communities = NULL,
-    halo = FALSE) {
-    
+do_simi <- function(
+    x,
+    method = 'cooc',
+    seuil = NULL,
+    p.type = 'tkplot',
+    layout.type = 'frutch',
+    max.tree = TRUE,
+    coeff.vertex = NULL,
+    coeff.edge = NULL,
+    minmaxeff = NULL,
+    vcexminmax = NULL,
+    cex = 1,
+    coords = NULL,
+    communities = NULL,
+    halo = FALSE
+) {
     simi_graph <- create_graph(x$mat)
     
     weights_definition <- define_weights(simi_graph, max.tree, method,
@@ -175,11 +181,20 @@ do_simi <- function(x, method = 'cooc', seuil = NULL, p.type = 'tkplot',
         graph_communities <- NULL
     }
     
-    list(graph = weights_definition$simi_graph, mat.eff = weights_definition$mat_eff,
-        eff = weights_definition$eff, mat = x$mat, halo = halo, layout = graph_layout,
-        v.label = weights_definition$vertices_labels, we.width = weights_definition$we_width,
-        we.label = weights_definition$we_label, communities = graph_communities,
-        label.cex = weights_definition$label_cex, elim = weights_definition$elim)
+    list(
+        graph = weights_definition$simi_graph,
+        mat.eff = weights_definition$mat_eff,
+        eff = weights_definition$eff,
+        mat = x$mat,
+        halo = halo,
+        layout = graph_layout,
+        v.label = weights_definition$vertices_labels,
+        we.width = weights_definition$we_width,
+        we.label = weights_definition$we_label,
+        communities = graph_communities,
+        label.cex = weights_definition$label_cex,
+        elim = weights_definition$elim
+    )
 }
 
 define_vertex_label_color <- function(vertex_label_cex, vertex_label_color) {
@@ -307,12 +322,26 @@ tk_plot <- function(graph_simi, vertex.size, vertex.color, vertex_label_color,
     coords
 }
 
-plot_simi <- function(graph.simi, p.type = 'tkplot', filename = NULL,
-    communities = NULL, vertex.color = 'red', edge.color = 'black',
-    vertex.label.color = 'black', vertex.label.cex = NULL, vertex.size = NULL,
-    leg = NULL, width = 800, height = 800, alpha = 0.1, cexalpha = FALSE,
-    movie = NULL, edge.curved = TRUE, svg = FALSE, bg = 'white') {
-
+plot_simi <- function(
+    graph.simi,
+    p.type = 'tkplot',
+    filename = NULL,
+    communities = NULL,
+    vertex.color = 'red',
+    edge.color = 'black',
+    vertex.label.color = 'black',
+    vertex.label.cex = NULL,
+    vertex.size = NULL,
+    leg = NULL,
+    width = 800,
+    height = 800,
+    alpha = 0.1,
+    cexalpha = FALSE,
+    movie = NULL,
+    edge.curved = TRUE,
+    svg = FALSE,
+    bg = 'white'
+) {
     if (!is.null(vertex.label.cex)) {
         label.cex <- vertex.label.cex
     } else {
@@ -358,7 +387,7 @@ plot_simi <- function(graph.simi, p.type = 'tkplot', filename = NULL,
 make_bin <- function(cs, a, i, j, nb) {
     if (a[i, j] >= 1) {
         ab <- a[i, j] - 1 
-        res <- binom.test(ab, nb, (cs[i]/nb) * (cs[j]/nb), "less")
+        res <- binom.test(ab, nb, (cs[i] / nb) * (cs[j] / nb), "less")
     } else {
         res <- NULL
         res$p.value <- 0
@@ -367,16 +396,22 @@ make_bin <- function(cs, a, i, j, nb) {
     res$p.value
 }
 
+square_matrix <- function(x) {
+    x <- as.matrix(x)
+    t(x) %*% x
+}
+
 binom_sim <- function(x) {
-    a <- t(x) %*% (x)
+    a <- square_matrix(x)
     n <- nrow(x)
     cs <- colSums(x)
-    mat <- matrix(0,ncol(x),ncol(x))
-    colnames(mat)<-colnames(a)
-    rownames(mat)<-rownames(a)
-    for (i in 1:(ncol(x)-1)) {
-        for (j in (i+1):ncol(x)) {
-            mat[j,i] <- make_bin(cs, a, i, j , n)
+    mat <- matrix(0, ncol(x), ncol(x))
+    colnames(mat) <- colnames(a)
+    rownames(mat) <- rownames(a)
+    
+    for (i in 1:(ncol(x) - 1)) {
+        for (j in (i + 1):ncol(x)) {
+            mat[j, i] <- make_bin(cs, a, i, j, n)
         }
     }
 
@@ -384,10 +419,13 @@ binom_sim <- function(x) {
 }
 
 graph.word <- function(mat.simi, index) {
-    nm <- matrix(0, ncol = ncol(mat.simi), nrow=nrow(mat.simi),
-        dimnames = list(row.names(mat.simi), colnames(mat.simi)))
+    nm <- matrix(
+        0,
+        ncol = ncol(mat.simi),
+        nrow = nrow(mat.simi),
+        dimnames = list(row.names(mat.simi), colnames(mat.simi))
+    )
 
-    nm[,index] <- mat.simi[,index]
+    nm[, index] <- mat.simi[, index]
     nm[index,] <- mat.simi[index,]
-    nm
 }

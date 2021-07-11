@@ -144,19 +144,18 @@ check.word.parameter <- function(parameters, sparse, matrix.data, index) {
 
 create.sparse <- function(parameters, matrix.data) {
     if (parameters$method == 'cooc') {
-        sparse <- t(as.matrix(matrix.data)) %*% matrix.data
+        sparse <- square_matrix(matrix.data)
 
     } else if (parameters$method == 'Russel') {
-        sparse <- proxy::simil(matrix.data, method = parameters$method, diag = TRUE,
-            upper = TRUE, by_rows = FALSE)
+        sparse <- proxy::simil(matrix.data, method = parameters$method,
+            diag = TRUE, upper = TRUE, by_rows = FALSE)
 
     } else if (parameters$method == 'binomial') {
         sparse <- binom_sim(matrix.data)
 
     } else {
-        matrix.data <- as.matrix(matrix.data)
-        sparse <- proxy::simil(matrix.data, method = parameters$method, diag = TRUE,
-            upper = TRUE, by_rows = FALSE)
+        sparse <- proxy::simil(as.matrix(matrix.data), method = parameters$method,
+            diag = TRUE, upper = TRUE, by_rows = FALSE)
     }
 
     as.matrix(stats::as.dist(sparse, diag = TRUE, upper = TRUE))
