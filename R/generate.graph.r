@@ -222,7 +222,7 @@ generate.graph <- function(parameters, analysis.path) {
         layout.type = parameters$layout,
         max.tree = parameters$maxtree,
         coeff.vertex = parameters$coeff.tv,
-        coeff.edge = parameters$coeff.te.range,
+        coeff_edge = parameters$coeff.te.range,
         minmaxeff = parameters$minmaxeff,
         vcexminmax = parameters$vcexminmax,
         cex = parameters$cex,

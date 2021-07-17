@@ -140,9 +140,9 @@ plot.graph <- function(graph.simi, parameters, ...) {
 
         if (vertex.size != 0 || graph.simi$halo) {
             vertex.label.color <- 'black'
-            parameters$cols <- colm[membership(graph.simi$communities)]
+            parameters$cols <- colm[igraph::membership(graph.simi$communities)]
         } else {
-            vertex.label.color <- colm[membership(graph.simi$communities)]
+            vertex.label.color <- colm[igraph::membership(graph.simi$communities)]
         }
     }
 

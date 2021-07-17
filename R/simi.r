@@ -25,88 +25,84 @@
 # Yule2  a, b, c, d  (sqrt(ad) - sqrt(bc)) / (sqrt(ad) + sqrt(bc))
 
 create_graph <- function(data_matrix) {
-    graph <- igraph::graph_from_adjacency_matrix(data_matrix, mode = 'lower',
+    igraph::graph_from_adjacency_matrix(data_matrix, mode = 'lower',
         weighted = TRUE)
 }
 
-define_weights <- function(simi_graph, max.tree, method, seuil, mat.simi,
-    minmaxeff, vcexminmax, coeff.vertex, cex, coeff.edge, mat.eff) {
-    
-    weori <- igraph::get.edge.attribute(simi_graph, 'weight')
-    
-    if (max.tree) {
-        if (method == 'cooc') {
-            invw <- 1 / weori
-        } else {
-            invw <- 1 - weori
-        }
-
-        igraph::E(simi_graph)$weight <- invw
-        g.toplot <- igraph::minimum.spanning.tree(simi_graph)
-        
-        if (method == 'cooc') {
-            igraph::E(g.toplot)$weight <- 1 / igraph::E(g.toplot)$weight
-        } else {
-            igraph::E(g.toplot)$weight <- 1 - igraph::E(g.toplot)$weight
-        }
+invert_weights <- function(simi_graph, method) {
+    if (method == 'cooc') {
+        igraph::E(simi_graph)$weight <- 1 / igraph::E(simi_graph)$weight
+    } else {
+        igraph::E(simi_graph)$weight <- 1 - igraph::E(simi_graph)$weight
     }
+    
+    simi_graph
+}
 
+define_weights <- function(simi_graph, method) {
+    invert_weights(simi_graph, method) %>%
+    igraph::minimum.spanning.tree() %>%
+    invert_weights(method)
+}
+
+simplify_graph <- function(simi_graph, seuil, mat_simi, mat_eff) {
     if (!is.null(seuil)) {
-        if (seuil >= max(mat.simi)) seuil <- 0
+        if (seuil >= max(mat_simi)) seuil <- 0
         
         vec <- vector()
-        tovire <- which(igraph::E(g.toplot)$weight <= seuil)
-        g.toplot <- igraph::delete.edges(g.toplot, tovire)
+        tovire <- which(igraph::E(simi_graph)$weight <= seuil)
+        simi_graph <- igraph::delete.edges(simi_graph, tovire)
         
-        for (i in 1:(length(igraph::V(g.toplot)))) {
-            if (length(igraph::neighbors(g.toplot, i)) == 0) {
+        for (i in seq_len(length(igraph::V(simi_graph)))) {
+            if (length(igraph::neighbors(simi_graph, i)) == 0) {
                 vec <- append(vec, i)
             }
         }
 
-        g.toplot <- igraph::delete.vertices(g.toplot, vec)
-        v.label <- igraph::V(g.toplot)$name
+        simi_graph <- igraph::delete.vertices(simi_graph, vec)
 
-        if (!is.logical(vec)) mat.eff <- mat.eff[-vec]
+        if (!is.logical(vec)) mat_eff <- mat_eff[-vec]
     } else {
-        v.label <- NULL
         vec <- NULL
     }
 
-    if (!is.null(minmaxeff[1])) {
-        eff <- norm.vec(mat.eff, minmaxeff[1], minmaxeff[2])
-    } else {
-        eff <- coeff.vertex
-    }
+    list(
+        simi_graph = simi_graph,
+        elim = vec,
+        mat_eff = mat_eff
+    )
+}
 
-    if (!is.null(vcexminmax[1])) {
-        label.cex <- norm.vec(mat.eff, vcexminmax[1], vcexminmax[2])
+get_labels <- function(simi_graph, seuil, method) {
+    if (!is.null(seuil)) {
+        vertice_label <- igraph::V(simi_graph)$name
     } else {
-        label.cex <- cex
-    }
-
-    if (!is.null(coeff.edge)) {
-        we.width <- norm.vec(abs(igraph::E(g.toplot)$weight), coeff.edge[1], coeff.edge[2])
-    } else {
-        we.width <- NULL
+        vertice_label <- NULL
     }
 
     if (method != 'binom') {
-        we.label <- round(igraph::E(g.toplot)$weight, 2)
+        digits <- 2
     } else {
-        we.label <- round(igraph::E(g.toplot)$weight, 3)
+        digits <- 3
     }
 
-    list(
-        simi_graph = g.toplot,
-        elim = vec,
-        vertices_labels = v.label,
-        eff = eff,
-        label_cex = label.cex,
-        we_width = we.width,
-        we_label = we.label,
-        mat_eff = mat.eff
-    )
+    edge_label <- round(igraph::E(simi_graph)$weight, digits)
+
+    list(vertices = vertice_label, edges = edge_label)
+}
+
+define_width <- function(simi_graph, coeff_edge) {
+    if (!is.null(coeff_edge)) {
+        edge_width <- norm.vec(
+            abs(igraph::E(simi_graph)$weight),
+            coeff_edge[1],
+            coeff_edge[2]
+        )
+    } else {
+        edge_width <- NULL
+    }
+
+    edge_width
 }
 
 define_layout <- function(p.type, layout.type, coords, simi_graph) {
@@ -131,7 +127,7 @@ define_layout <- function(p.type, layout.type, coords, simi_graph) {
     defined_layout
 }
 
-define_communities <- function(communities, simi_graph) {
+define_communities <- function(communities_number, simi_graph) {
     communities_types <- c(
         igraph::edge.betweenness.community,
         igraph::fastgreedy.community,
@@ -143,10 +139,10 @@ define_communities <- function(communities, simi_graph) {
         igraph::walktrap.community
     )
 
-    communities_function <- communities_types[communities]
+    communities_function <- communities_types[[communities_number]]
     
     if (!is.null(communities_function)) {
-        communities_function(simi_graph)
+        return(communities_function(simi_graph))
     }
 }
 
@@ -158,7 +154,7 @@ do_simi <- function(
     layout.type = 'frutch',
     max.tree = TRUE,
     coeff.vertex = NULL,
-    coeff.edge = NULL,
+    coeff_edge = NULL,
     minmaxeff = NULL,
     vcexminmax = NULL,
     cex = 1,
@@ -167,33 +163,47 @@ do_simi <- function(
     halo = FALSE
 ) {
     simi_graph <- create_graph(x$mat)
+
+    if (max.tree) {
+        simi_graph <- define_weights(simi_graph, method)
+    }
     
-    weights_definition <- define_weights(simi_graph, max.tree, method,
-        seuil, x$mat, minmaxeff, vcexminmax, coeff.vertex, cex, coeff.edge, x$eff)
+    simplified_graph <- simplify_graph(simi_graph, seuil,
+        x$mat, x$eff)
+    
+    graph_labels <- get_labels(simplified_graph$simi_graph, seuil, method)
+    
+    edge_width <- define_width(simplified_graph$simi_graph, coeff_edge)
+
+    if (!is.null(minmaxeff[1])) {
+        coeff.vertex <- norm.vec(x$eff, minmaxeff[1], minmaxeff[2])
+    }
+
+    if (!is.null(vcexminmax[1])) {
+        cex <- norm.vec(x$eff, vcexminmax[1], vcexminmax[2])
+    }
 
     graph_layout <- define_layout(p.type, layout.type, coords,
-        weights_definition$simi_graph)
+        simplified_graph$simi_graph)
 
     if (!is.null(communities)) {
-        graph_communities <- define_communities(communities,
-            weights_definition$simi_graph)
-    } else {
-        graph_communities <- NULL
+        communities <- define_communities(communities,
+            simplified_graph$simi_graph)
     }
     
     list(
-        graph = weights_definition$simi_graph,
-        mat.eff = weights_definition$mat_eff,
-        eff = weights_definition$eff,
+        graph = simplified_graph$simi_graph,
+        mat.eff = simplified_graph$mat_eff,
+        eff = coeff.vertex,
         mat = x$mat,
         halo = halo,
         layout = graph_layout,
-        v.label = weights_definition$vertices_labels,
-        we.width = weights_definition$we_width,
-        we.label = weights_definition$we_label,
-        communities = graph_communities,
-        label.cex = weights_definition$label_cex,
-        elim = weights_definition$elim
+        v.label = graph_labels$vertices,
+        we.width = edge_width,
+        we.label = graph_labels$edges,
+        communities = communities,
+        label.cex = cex,
+        elim = simplified_graph$elim
     )
 }
 
@@ -202,12 +212,12 @@ define_vertex_label_color <- function(vertex_label_cex, vertex_label_color) {
     new_vertex_label_color <- c()
     
     if (length(vertex_label_color) == 1) {
-        for (i in 1:length(alphas)) {
+        for (i in seq_len(length(alphas))) {
             new_vertex_label_color <- append(new_vertex_label_color,
                 adjustcolor(vertex_label_color, alpha = alphas[i]))
         }
     } else {
-        for (i in 1:length(alphas)) {
+        for (i in seq_len(length(alphas))) {
             new_vertex_label_color <- append(new_vertex_label_color,
                 adjustcolor(vertex_label_color[i], alpha = alphas[i]))
         }
@@ -220,17 +230,14 @@ n_plot <- function(filename, width, height, svg, bg, leg, graph_simi, vertex.siz
     vertex.color, label.cex, edge.color, edge.curved, vertex_label_color) {
     
     open_file_graph(filename, width = width, height = height, svg = svg)
-    par(mar = c(2, 2, 2, 2))
-    par(bg = bg)
+    par(mar = c(2, 2, 2, 2), bg = bg, pch = ' ')
     
     if (!is.null(leg)) {
         layout(matrix(c(1, 2), 1, 2, byrow = TRUE), widths = c(3, lcm(7)))
         par(mar = c(2, 2, 1, 0))
     }
 
-    par(pch = ' ')
-
-    if (is.null(graph_simi$com)) {
+    if (is.null(graph_simi$communities)) {
         plot(
             graph_simi$graph,
             vertex.label = '',
@@ -247,13 +254,13 @@ n_plot <- function(filename, width, height, svg, bg, leg, graph_simi, vertex.siz
         )
     } else {
         if (graph_simi$halo) {
-            mark.groups <- communities(graph_simi$com)
+            mark.groups <- igraph::communities(graph_simi$communities)
         } else {
             mark.groups <- NULL
         }
 
         plot(
-            graph_simi$com,
+            graph_simi$communities,
             graph_simi$graph,
             vertex.label = '',
             edge.width = graph_simi$we.width,
@@ -292,7 +299,7 @@ n_plot <- function(filename, width, height, svg, bg, leg, graph_simi, vertex.siz
 tk_plot <- function(graph_simi, vertex.size, vertex.color, vertex_label_color,
     edge.color) {
     
-    id <- tkplot(
+    id <- igraph::tkplot(
         graph_simi$graph,
         vertex.label = graph_simi$v.label,
         edge.width = graph_simi$we.width,
@@ -304,27 +311,27 @@ tk_plot <- function(graph_simi, vertex.size, vertex.color, vertex_label_color,
         layout = graph_simi$layout
     )
 
-    coords <- tkplot.getcoords(id)
+    coords <- igraph::tkplot.getcoords(id)
     ok <- try(
-        coords <- tkplot.getcoords(id),
+        coords <- igraph::tkplot.getcoords(id),
         TRUE
     )
     
     while (is.matrix(ok)) {
         ok <- try(
-            coords <- tkplot.getcoords(id),
+            coords <- igraph::tkplot.getcoords(id),
             TRUE
         )
         Sys.sleep(0.5)
     }
     
-    tkplot.off()
+    igraph::tkplot.off()
     coords
 }
 
 plot_simi <- function(
     graph.simi,
-    p.type = 'tkplot',
+    p.type = 'nplot',
     filename = NULL,
     communities = NULL,
     vertex.color = 'red',
@@ -377,7 +384,7 @@ plot_simi <- function(
             graph.simi,
             vertex.size,
             vertex.color,
-            vertext.label.color,
+            vertex.label.color,
             edge.color
         )
     }
@@ -409,7 +416,7 @@ binom_sim <- function(x) {
     colnames(mat) <- colnames(a)
     rownames(mat) <- rownames(a)
     
-    for (i in 1:(ncol(x) - 1)) {
+    for (i in seq_along(ncol(x) - 1)) {
         for (j in (i + 1):ncol(x)) {
             mat[j, i] <- make_bin(cs, a, i, j, n)
         }
