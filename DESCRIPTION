@@ -7,5 +7,5 @@ Depends: R (>= 4.1.0)
 License: MIT
 Encoding: UTF-8
 LazyData: true
-Imports: igraph, proxy, Matrix
+Imports: igraph, proxy, Matrix, quanteda
 Suggests: testthat (>= 3.0.0)
