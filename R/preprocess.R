@@ -4,12 +4,13 @@ preprocess <- function(
     min_segment_size = 0,
     doc_id = NULL,
     segment_size = 40,
-    language = 'en'
+    language = 'en',
+    ...
 ) {
     corpus <- create_corpus(file_path, column)
     corpus <- rainette::split_segments(corpus, segment_size = segment_size)
     
-    dtm <- clean_corpus(corpus, language)
+    dtm <- clean_corpus(corpus, language, ...)
     dtm <- rainette::merge_segments(dtm, min_segment_size = min_segment_size,
         doc_id = doc_id)
     
@@ -24,12 +25,12 @@ create_corpus <- function(file_path, column) {
     quanteda::corpus(file_data, text_field = column)
 }
 
-clean_corpus <- function(corpus, language) {
+clean_corpus <- function(corpus, language, ...) {
     tokens <- quanteda::tokens(corpus, remove_punct = TRUE)
     tokens <- quanteda::tokens_remove(tokens, stopwords::stopwords(language))
     
     dtm <- quanteda::dfm(tokens, tolower = TRUE)
-    dtm <- quanteda::dfm_trim(dtm, min_docfreq = 10)
+    dtm <- quanteda::dfm_trim(dtm, ...)
     dtm <- quanteda::dfm_remove(dtm, '')
     quanteda::dfm_weight(dtm, scheme = 'boolean')
 }
