@@ -8,11 +8,11 @@ open_file_graph <- function (filename, width = 800, height = 800, quality = 100,
         if (!svg) {
 		    quartz(file = filename, type = 'png', width = width, height = height)
         } else {
-            svg(filename.to.svg(filename), width = width, height = height)
+            svg(filename_to_svg(filename), width = width, height = height)
         }
 	} else {
         if (svg) {
-            svg(filename.to.svg(filename), width = width / 74.97,
+            svg(filename_to_svg(filename), width = width / 74.97,
                 height = height / 74.97)
         } else {
 		    png(filename, width = width, height = height)
@@ -20,17 +20,17 @@ open_file_graph <- function (filename, width = 800, height = 800, quality = 100,
 	}
 }
 
-apply.chd <- function(parameters, dm) {
+apply_chd <- function(parameters, dm) {
     et <- list()
 
     for (index in seq_along(parameters$listet)) {
-        line.et <- parameters$listet[[index]]
-        line.et <- line.et + 1
+        line_et <- parameters$listet[[index]]
+        line_et <- line_et + 1
 
-        et[[index + 1]] <- paste(line.et, collapse = ',')
+        et[[index + 1]] <- paste(line_et, collapse = ',')
     }
 
-    unetoile <- paste(parameters$selected.stars, collapse = "','")
+    unetoile <- paste(parameters$selected_stars, collapse = "','")
     
     fsum <- NULL
     rs <- rowSums(dm)
@@ -49,24 +49,24 @@ apply.chd <- function(parameters, dm) {
     source('~/iramuteq-0.7-alpha2/Rscripts/chdfunct.r')
 
     lex <- AsLexico2(fsum, chip = TRUE)
-    dcol <- apply(lex[[4]], 1, which.max)
+    dcol <- apply(lex[[4]], 1, which_max)
     toblack <- apply(lex[[4]], 1, max)
     gcol <- rainbow(length(unetoile))
     
-    vertex.label.color <- gcol[dcol]
-    vertex.label.color[which(toblack <= 3.84)] <- 'black'
+    vertex_label_color <- gcol[dcol]
+    vertex_label_color[which(toblack <= 3.84)] <- 'black'
     
     leg <- list(unetoile = unetoile, gcol = gcol)
-    parameters$cols <- vertex.label.color
-    chi.vertex.size <- norm.vec(toblack, parameters$vcexmin,  parameters$vcexmax)
+    parameters$cols <- vertex_label_color
+    chi_vertex_size <- norm_vec(toblack, parameters$vcexmin,  parameters$vcexmax)
     
-    list(to.black = toblack, vertex.label.color = vertex.label.color, leg = leg,
-        chi.vertex.size = chi.vertex.size)
+    list(to_black = toblack, vertex_label_color = vertex_label_color, leg = leg,
+        chi_vertex_size = chi_vertex_size)
 }
 
-apply.plot.definitions <- function(parameters, graph.simi) {
-    vertex.label.color <- 'black'
-    chi.vertex.size <- 1
+apply_plot_definitions <- function(parameters, graph_simi) {
+    vertex_label_color <- 'black'
+    chi_vertex_size <- 1
     leg <- NULL
 
     if ((parameters$type == 'clustersimitxt' &&
@@ -76,87 +76,87 @@ apply.plot.definitions <- function(parameters, graph.simi) {
         
         lchi <- read.table(parameters$tmpchi)
         lchi <- lchi[, 1]
-        lchi <- lchi[sel.col]
+        lchi <- lchi[sel_col]
     }
 
     if (parameters$type %in% c('clustersimitxt', 'simimatrix', 'simiclustermatrix') &&
-        parameters$cex.from.chi) {
+        parameters$cex_from_chi) {
         
-        label.cex <- norm.vec(lchi, parameters$vcexmin, parameters$vcexmax)
+        label_cex <- norm_vec(lchi, parameters$vcexmin, parameters$vcexmax)
     } else {
         if (is.null(parameters$vcexmin)) {
-            label.cex <- parameters$cex
+            label_cex <- parameters$cex
         } else {
-            label.cex <- graph.simi$label.cex
+            label_cex <- graph_simi$label_cex
         }
     }
 
     if (parameters$type %in% c('clustersimitxt', 'simimatrix', 'simiclustermatrix') &&
         parameters$sfromchi) {
 
-        vertex.size <- norm.vec(lchi, parameters$tvmin, parameters$tvmax)
+        vertex_size <- norm_vec(lchi, parameters$tvmin, parameters$tvmax)
         
-        if (!length(vertex.size)) vertex.size <- 0
+        if (!length(vertex_size)) vertex_size <- 0
     } else {
         if (is.null(parameters$tvmin)) {
-            vertex.size <- 0
+            vertex_size <- 0
         } else {
-            vertex.size <- graph.simi$eff
+            vertex_size <- graph_simi$eff
         }
     }
 
-    list(vertex.size = vertex.size, leg = leg, chi.vertex.size = chi.vertex.size,
-        vertex.label.color = vertex.label.color)
+    list(vertex_size = vertex_size, leg = leg, chi_vertex_size = chi_vertex_size,
+        vertex_label_color = vertex_label_color)
 }
 
-plot.graph <- function(graph.simi, parameters, ...) {
+plot_graph <- function(graph_simi, parameters, ...) {
     if (parameters$bystar) {
-        chd.definition <- apply.chd(parameters, matrix.data)
-        vertex.label.color <- chd.definition$vertex.label.color
-        leg <- chd.definition$leg
+        chd_definition <- apply_chd(parameters, matrix_data)
+        vertex_label_color <- chd_definition$vertex_label_color
+        leg <- chd_definition$leg
 
-        if (parameters$cex.from.chi) {
-            label.cex <- chd.definition$chi.vertex.size
+        if (parameters$cex_from_chi) {
+            label_cex <- chd_definition$chi_vertex_size
         } else {
-            label.cex <- parameters$cex
+            label_cex <- parameters$cex
         }
 
         if (parameters$sfromchi) {
-            vertex.size <- norm.vec(chd.definition$to.black, parameters$tvmin,
+            vertex_size <- norm_vec(chd_definition$to_black, parameters$tvmin,
                 parameters$tvmax)
         } else {
-            vertex.size <- NULL
+            vertex_size <- NULL
         }
     } else {
-        plot.definitions <- apply.plot.definitions(parameters, graph.simi)
-        vertex.size <- plot.definitions$vertex.size
-        leg <- plot.definitions$leg
-        label.cex <- plot.definitions$chi.vertex.size
-        vertex.label.color <- plot.definitions$vertex.label.color
+        plot_definitions <- apply_plot_definitions(parameters, graph_simi)
+        vertex_size <- plot_definitions$vertex_size
+        leg <- plot_definitions$leg
+        label_cex <- plot_definitions$chi_vertex_size
+        vertex_label_color <- plot_definitions$vertex_label_color
     }
 
-    if (!is.null(graph.simi$communities)) {
-        colm <- rainbow(length(graph.simi$communities))
+    if (!is.null(graph_simi$communities)) {
+        colm <- rainbow(length(graph_simi$communities))
 
-        if (vertex.size != 0 || graph.simi$halo) {
-            vertex.label.color <- 'black'
-            parameters$cols <- colm[igraph::membership(graph.simi$communities)]
+        if (vertex_size != 0 || graph_simi$halo) {
+            vertex_label_color <- 'black'
+            parameters$cols <- colm[igraph::membership(graph_simi$communities)]
         } else {
-            vertex.label.color <- colm[igraph::membership(graph.simi$communities)]
+            vertex_label_color <- colm[igraph::membership(graph_simi$communities)]
         }
     }
 
     coords <- plot_simi(
-        graph.simi,
+        graph_simi,
         ...,
-        vertex.color = parameters$cols,
-        vertex.label.color = vertex.label.color,
-        vertex.label.cex = label.cex,
-        vertex.size = vertex.size,
-        edge.color = parameters$cola,
+        vertex_color = parameters$cols,
+        vertex_label_color = vertex_label_color,
+        vertex_label_cex = label_cex,
+        vertex_size = vertex_size,
+        edge_color = parameters$cola,
         leg = leg,
         alpha = parameters$alpha,
-        edge.curved = parameters$edge.curved,
+        edge_curved = parameters$edge_curved,
         svg = parameters$svg
     )
 }

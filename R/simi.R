@@ -40,9 +40,9 @@ invert_weights <- function(simi_graph, method) {
 }
 
 define_weights <- function(simi_graph, method) {
-    invert_weights(simi_graph, method) %>%
-    igraph::minimum.spanning.tree() %>%
-    invert_weights(method)
+    simi_graph <- invert_weights(simi_graph, method)
+    simi_graph <- igraph::minimum.spanning.tree(simi_graph)
+    invert_weights(simi_graph, method)
 }
 
 simplify_graph <- function(simi_graph, seuil, mat_simi, mat_eff) {
@@ -93,7 +93,7 @@ get_labels <- function(simi_graph, seuil, method) {
 
 define_width <- function(simi_graph, coeff_edge) {
     if (!is.null(coeff_edge)) {
-        edge_width <- norm.vec(
+        edge_width <- norm_vec(
             abs(igraph::E(simi_graph)$weight),
             coeff_edge[1],
             coeff_edge[2]
@@ -105,7 +105,7 @@ define_width <- function(simi_graph, coeff_edge) {
     edge_width
 }
 
-define_layout <- function(p.type, layout.type, coords, simi_graph) {
+define_layout <- function(plot_type, layout_type, coords, simi_graph) {
     layout_types <- list(
         frutch = igraph::layout.fruchterman.reingold,
         kawa = igraph::layout.kamada.kawai,
@@ -115,7 +115,7 @@ define_layout <- function(p.type, layout.type, coords, simi_graph) {
     )
 
     if (is.null(coords)) {
-        layout_function <- layout_types[[layout.type]]
+        layout_function <- layout_types[[layout_type]]
 
         if (!is.null(layout_function)) {
             defined_layout <- layout_function(simi_graph)
@@ -150,13 +150,13 @@ do_simi <- function(
     x,
     method = 'cooc',
     seuil = NULL,
-    p.type = 'tkplot',
-    layout.type = 'frutch',
-    max.tree = TRUE,
-    coeff.vertex = NULL,
+    plot_type = 'nplot',
+    layout_type = 'frutch',
+    max_tree = TRUE,
+    coeff_vertex = NULL,
     coeff_edge = NULL,
-    minmaxeff = NULL,
-    vcexminmax = NULL,
+    minmax_eff = NULL,
+    vcex_minmax = NULL,
     cex = 1,
     coords = NULL,
     communities = NULL,
@@ -164,7 +164,7 @@ do_simi <- function(
 ) {
     simi_graph <- create_graph(x$mat)
 
-    if (max.tree) {
+    if (max_tree) {
         simi_graph <- define_weights(simi_graph, method)
     }
     
@@ -175,15 +175,15 @@ do_simi <- function(
     
     edge_width <- define_width(simplified_graph$simi_graph, coeff_edge)
 
-    if (!is.null(minmaxeff[1])) {
-        coeff.vertex <- norm.vec(x$eff, minmaxeff[1], minmaxeff[2])
+    if (!is.null(minmax_eff[1])) {
+        coeff.vertex <- norm_vec(x$eff, minmax_eff[1], minmax_eff[2])
     }
 
-    if (!is.null(vcexminmax[1])) {
-        cex <- norm.vec(x$eff, vcexminmax[1], vcexminmax[2])
+    if (!is.null(vcex_minmax[1])) {
+        cex <- norm_vec(x$eff, vcex_minmax[1], vcex_minmax[2])
     }
 
-    graph_layout <- define_layout(p.type, layout.type, coords,
+    graph_layout <- define_layout(plot_type, layout_type, coords,
         simplified_graph$simi_graph)
 
     if (!is.null(communities)) {
@@ -193,22 +193,22 @@ do_simi <- function(
     
     list(
         graph = simplified_graph$simi_graph,
-        mat.eff = simplified_graph$mat_eff,
-        eff = coeff.vertex,
+        mat_eff = simplified_graph$mat_eff,
+        eff = coeff_vertex,
         mat = x$mat,
         halo = halo,
         layout = graph_layout,
-        v.label = graph_labels$vertices,
-        we.width = edge_width,
-        we.label = graph_labels$edges,
+        v_label = graph_labels$vertices,
+        we_width = edge_width,
+        we_label = graph_labels$edges,
         communities = communities,
-        label.cex = cex,
+        label_cex = cex,
         elim = simplified_graph$elim
     )
 }
 
 define_vertex_label_color <- function(vertex_label_cex, vertex_label_color) {
-    alphas <- norm.vec(vertex_label_cex, 0.5, 1)
+    alphas <- norm_vec(vertex_label_cex, 0.5, 1)
     new_vertex_label_color <- c()
     
     if (length(vertex_label_color) == 1) {
@@ -226,8 +226,8 @@ define_vertex_label_color <- function(vertex_label_cex, vertex_label_color) {
     new_vertex_label_color
 }
 
-n_plot <- function(filename, width, height, svg, bg, leg, graph_simi, vertex.size,
-    vertex.color, label.cex, edge.color, edge.curved, vertex_label_color) {
+n_plot <- function(filename, width, height, svg, bg, leg, graph_simi, vertex_size,
+    vertex_color, label_cex, edge_color, edge_curved, vertex_label_color) {
     
     open_file_graph(filename, width = width, height = height, svg = svg)
     par(mar = c(2, 2, 2, 2), bg = bg, pch = ' ')
@@ -241,48 +241,48 @@ n_plot <- function(filename, width, height, svg, bg, leg, graph_simi, vertex.siz
         plot(
             graph_simi$graph,
             vertex.label = '',
-            edge.width = graph_simi$we.width,
-            vertex.size = vertex.size,
-            vertex.color = vertex.color,
+            edge.width = graph_simi$we_width,
+            vertex.size = vertex_size,
+            vertex.color = vertex_color,
             vertex.label.color = 'white',
-            edge.label = graph_simi$we.label,
-            edge.label.cex = label.cex,
-            edge.color = edge.color,
+            edge.label = graph_simi$we_label,
+            edge.label.cex = label_cex,
+            edge.color = edge_color,
             vertex.label.cex = 0,
             layout = graph_simi$layout,
-            edge.curved = edge.curved
+            edge.curved = edge_curved
         )
     } else {
         if (graph_simi$halo) {
-            mark.groups <- igraph::communities(graph_simi$communities)
+            mark_groups <- igraph::communities(graph_simi$communities)
         } else {
-            mark.groups <- NULL
+            mark_groups <- NULL
         }
 
         plot(
             graph_simi$communities,
             graph_simi$graph,
             vertex.label = '',
-            edge.width = graph_simi$we.width,
-            vertex.size = vertex.size,
-            vertex.color = vertex.color,
+            edge.width = graph_simi$we_width,
+            vertex.size = vertex_size,
+            vertex.color = vertex_color,
             vertex.label.color = 'white',
-            edge.label = graph_simi$we.label,
-            edge.label.cex = label.cex,
-            edge.color = edge.color,
+            edge.label = graph_simi$we_label,
+            edge.label.cex = label_cex,
+            edge.color = edge_color,
             vertex.label.cex = 0,
             layout = graph_simi$layout,
-            mark.groups = mark.groups,
-            edge.curved = edge.curved
+            mark.groups = mark_groups,
+            edge.curved = edge_curved
         )
     }
     
-    txt.layout <- igraph::layout.norm(graph_simi$layout, -1, 1, -1, 1, -1, 1)
+    txt_layout <- igraph::norm_coords(graph_simi$layout)
     text(
-        txt.layout[, 1],
-        txt.layout[, 2],
-        graph_simi$v.label,
-        cex = label.cex,
+        txt_layout[, 1],
+        txt_layout[, 2],
+        graph_simi$v_label,
+        cex = label_cex,
         col = vertex_label_color
     )
     
@@ -296,18 +296,18 @@ n_plot <- function(filename, width, height, svg, bg, leg, graph_simi, vertex.siz
     graph_simi$layout
 }
 
-tk_plot <- function(graph_simi, vertex.size, vertex.color, vertex_label_color,
-    edge.color) {
+tk_plot <- function(graph_simi, vertex_size, vertex_color, vertex_label_color,
+    edge_color) {
     
     id <- igraph::tkplot(
         graph_simi$graph,
-        vertex.label = graph_simi$v.label,
-        edge.width = graph_simi$we.width,
-        vertex.size = vertex.size,
-        vertex.color = vertex.color,
+        vertex.label = graph_simi$v_label,
+        edge.width = graph_simi$we_width,
+        vertex.size = vertex_size,
+        vertex.color = vertex_color,
         vertex.label.color = vertex_label_color,
-        edge.label = graph_simi$we.label,
-        edge.color = edge.color,
+        edge.label = graph_simi$we_label,
+        edge.color = edge_color,
         layout = graph_simi$layout
     )
 
@@ -330,40 +330,40 @@ tk_plot <- function(graph_simi, vertex.size, vertex.color, vertex_label_color,
 }
 
 plot_simi <- function(
-    graph.simi,
-    p.type = 'nplot',
+    graph_simi,
+    plot_type = 'nplot',
     filename = NULL,
     communities = NULL,
-    vertex.color = 'red',
-    edge.color = 'black',
-    vertex.label.color = 'black',
-    vertex.label.cex = NULL,
-    vertex.size = NULL,
+    vertex_color = 'red',
+    edge_color = 'black',
+    vertex_label_color = 'black',
+    vertex_label_cex = NULL,
+    vertex_size = NULL,
     leg = NULL,
     width = 800,
     height = 800,
     alpha = 0.1,
     cexalpha = FALSE,
     movie = NULL,
-    edge.curved = TRUE,
+    edge_curved = TRUE,
     svg = FALSE,
     bg = 'white'
 ) {
-    if (!is.null(vertex.label.cex)) {
-        label.cex <- vertex.label.cex
+    if (!is.null(vertex_label_cex)) {
+        label_cex <- vertex_label_cex
     } else {
-        label.cex <- graph.simi$label.cex
+        label_cex <- graph_simi$label_cex
     }
 
     if (cexalpha) {
-        vertex.label.color <- define_vertex_label_color(label.cex, vertex.label.color)
+        vertex_label_color <- define_vertex_label_color(label_cex, vertex_label_color)
     }
 
-    if (is.null(vertex.size)) {
-        vertex.size <- graph.simi$eff
+    if (is.null(vertex_size)) {
+        vertex_size <- graph_simi$eff
     }
 
-    if (p.type == 'nplot') {
+    if (plot_type == 'nplot') {
         plot_result <- n_plot(
             filename,
             width,
@@ -371,21 +371,21 @@ plot_simi <- function(
             svg,
             bg,
             leg,
-            graph.simi,
-            vertex.size,
-            vertex.color,
-            label.cex,
-            edge.color,
-            edge.curved,
-            vertex.label.color
+            graph_simi,
+            vertex_size,
+            vertex_color,
+            label_cex,
+            edge_color,
+            edge_curved,
+            vertex_label_color
         )
-    } else if (p.type == 'tkplot') {
+    } else if (plot_type == 'tkplot') {
         plot_result <- tk_plot(
-            graph.simi,
-            vertex.size,
-            vertex.color,
-            vertex.label.color,
-            edge.color
+            graph_simi,
+            vertex_size,
+            vertex_color,
+            vertex_label_color,
+            edge_color
         )
     }
     plot_result
@@ -397,10 +397,10 @@ make_bin <- function(cs, a, i, j, nb) {
         res <- binom.test(ab, nb, (cs[i] / nb) * (cs[j] / nb), "less")
     } else {
         res <- NULL
-        res$p.value <- 0
+        res$p_value <- 0
     }
 
-    res$p.value
+    res$p_value
 }
 
 square_matrix <- function(x) {
@@ -425,14 +425,14 @@ binom_sim <- function(x) {
     mat
 }
 
-graph.word <- function(mat.simi, index) {
+graph_word <- function(mat_simi, index) {
     nm <- matrix(
         0,
-        ncol = ncol(mat.simi),
-        nrow = nrow(mat.simi),
-        dimnames = list(row.names(mat.simi), colnames(mat.simi))
+        ncol = ncol(mat_simi),
+        nrow = nrow(mat_simi),
+        dimnames = list(row.names(mat_simi), colnames(mat_simi))
     )
 
-    nm[, index] <- mat.simi[, index]
-    nm[index,] <- mat.simi[index,]
+    nm[, index] <- mat_simi[, index]
+    nm[index,] <- mat_simi[index,]
 }

@@ -1,54 +1,54 @@
-norm.vec <- function(vector, min, max) {
-  vector.range <- range(vector)
+norm_vec <- function(vector, min, max) {
+    vector_range <- range(vector)
 
-  if (vector.range[1] == vector.range[2]) {
-    fac <- 1
-  } else {
-    fac <- (max - min) / (vector.range[2] - vector.range[1])
-  }
-
-  (vector - vector.range[1]) * fac + min
-}
-
-data.paths <- function(analysis.path, actives = FALSE) {
-    if (actives) {
-        actives.path <- paste0(analysis.path, 'actives.csv')
+    if (vector_range[1] == vector_range[2]) {
+        fac <- 1
     } else {
-        actives.path <- NULL
+        fac <- (max - min) / (vector_range[2] - vector_range[1])
     }
 
-    matrix.data.path <- paste0(analysis.path, 'mat01.csv')
-    selected.col <- paste0(analysis.path, 'selected.csv')
-
-    list(matrix.path = matrix.data.path, selected = selected.col,
-        actives.path = actives.path)
+    (vector - vector_range[1]) * fac + min
 }
 
-load.data <- function(parameters, analysis.path) {
+data_paths <- function(analysis_path, actives = FALSE) {
+    if (actives) {
+        actives_path <- paste0(analysis_path, 'actives.csv')
+    } else {
+        actives_path <- NULL
+    }
+
+    matrix_data_path <- paste0(analysis_path, 'mat01.csv')
+    selected_col <- paste0(analysis_path, 'selected.csv')
+
+    list(matrix_path = matrix_data_path, selected = selected_col,
+        actives_path = actives_path)
+}
+
+load_data <- function(parameters, analysis_path) {
     if (parameters$type != 'simimatrix' ||
         parameters$type == 'simiclustermatrix') {
 
-        paths.list <- data.paths(analysis.path, actives = TRUE)
+        paths_list <- data_paths(analysis_path, actives = TRUE)
 
-        matrix.data <- Matrix::readMM(paths.list$matrix.path)
-        actives <- read.table(paths.list$actives.path, sep = '\t', quote = '"')
+        matrix_data <- Matrix::readMM(paths_list$matrix_path)
+        actives <- read.table(paths_list$actives_path, sep = '\t', quote = '"')
 
-        colnames(matrix.data) <- actives[, 1]
+        colnames(matrix_data) <- actives[, 1]
     } else if (parameters$type == 'simimatrix' ||
         parameters$type == 'simiclustermatrix') {
 
-        paths.list <- data.paths(analysis.path)
+        paths_list <- data_paths(analysis_path)
 
-        matrix.data <- read.csv2(paths.list$matrix.path)
-        matrix.data <- as.matrix(matrix.data)
+        matrix_data <- read.csv2(paths_list$matrix_path)
+        matrix_data <- as.matrix(matrix_data)
     }
 
-    list(paths = paths.list, matrix = matrix.data)
+    list(paths = paths_list, matrix = matrix_data)
 }
 
-load.coords <- function() {
+load_coords <- function() {
     coords <- try(coords, TRUE)
-    load(paste0(analysis.path, 'RData.RData'))
+    load(paste0(analysis_path, 'RData.RData'))
 
     if (!is.matrix(coords)) {
         coords <- NULL
@@ -57,7 +57,7 @@ load.coords <- function() {
     coords
 }
 
-select.matrix.word <- function(parameters, matrix.data, selected.column) {
+select_matrix_word <- function(parameters, matrix_data, selected_column) {
     if ('word' %in% parameters) {
         word <- TRUE
         index <- parameters$word + 1
@@ -67,33 +67,33 @@ select.matrix.word <- function(parameters, matrix.data, selected.column) {
     }
 
     if (!word) {
-        matrix.data <- matrix.data[, selected.column]
+        matrix_data <- matrix_data[, selected_column]
     } else {
-        forme <- colnames(matrix.data)[index]
+        forme <- colnames(matrix_data)[index]
 
-        if (!index %in% selected.column) {
-            selected.column <- append(selected.column, index)
+        if (!index %in% selected_column) {
+            selected_column <- append(selected_column, index)
         }
 
-        matrix.data <- matrix.data[, selected.column]
-        index <- which(colnames(matrix.data) == forme)
+        matrix_data <- matrix_data[, selected_column]
+        index <- which(colnames(matrix_data) == forme)
     }
 
-    list(matrix = matrix.data, index = index)
+    list(matrix = matrix_data, index = index)
 }
 
-check.selected.column <- function(sel.col.file, matrix.data) {
-    if (file.exists(sel.col.file)) {
-        sel.col <- read.csv2(sel.col.file, header = FALSE)
-        sel.col <- sel.col[, 1] + 1
+check_selected_column <- function(sel_col_file, matrix_data) {
+    if (file.exists(sel_col_file)) {
+        sel_col <- read.csv2(sel_col_file, header = FALSE)
+        sel_col <- sel_col[, 1] + 1
     } else {
-        sel.col <- 1:ncol(matrix.data)
+        sel_col <- 1:ncol(matrix_data)
     }
 
-    sel.col
+    sel_col
 }
 
-check.inf <- function(sparse) {
+check_inf <- function(sparse) {
     if (length(which(sparse == Inf))) {
         infp <- which(sparse == Inf)
         sparse[infp] <- NA
@@ -125,45 +125,45 @@ check.inf <- function(sparse) {
     sparse
 }
 
-check.word.parameter <- function(parameters, sparse, matrix.data, index) {
+check_word_parameter <- function(parameters, sparse, matrix_data, index) {
     if ('word' %in% parameters) {
-        sparse <- graph.word(sparse, index)
-        col.sum <- colSums(sparse)
+        sparse <- graph_word(sparse, index)
+        col_sum <- colSums(sparse)
 
-        if (length(col.sum)) sparse <- sparse[, -which(col.sum == 0)]
+        if (length(col_sum)) sparse <- sparse[, -which(col_sum == 0)]
 
-        row.sum <- rowSums(sparse)
+        row_sum <- rowSums(sparse)
 
-        if (length(row.sum)) sparse <- sparse[-which(row.sum == 0),]
-        if (length(col.sum)) matrix.data <- matrix.data[, -which(col.sum == 0)]
+        if (length(row_sum)) sparse <- sparse[-which(row_sum == 0),]
+        if (length(col_sum)) matrix_data <- matrix_data[, -which(col_sum == 0)]
 
     }
 
-    list(sparse = sparse, matrix = matrix.data)
+    list(sparse = sparse, matrix = matrix_data)
 }
 
-create.sparse <- function(parameters, matrix.data) {
+create_sparse <- function(parameters, matrix_data) {
     if (parameters$method == 'cooc') {
-        sparse <- square_matrix(matrix.data)
+        sparse <- square_matrix(matrix_data)
 
     } else if (parameters$method == 'Russel') {
-        sparse <- proxy::simil(matrix.data, method = parameters$method,
+        sparse <- proxy::simil(matrix_data, method = parameters$method,
             diag = TRUE, upper = TRUE, by_rows = FALSE)
 
     } else if (parameters$method == 'binomial') {
-        sparse <- binom_sim(matrix.data)
+        sparse <- binom_sim(matrix_data)
 
     } else {
-        sparse <- proxy::simil(as.matrix(matrix.data), method = parameters$method,
+        sparse <- proxy::simil(as.matrix(matrix_data), method = parameters$method,
             diag = TRUE, upper = TRUE, by_rows = FALSE)
     }
 
     as.matrix(stats::as.dist(sparse, diag = TRUE, upper = TRUE))
 }
 
-check.coeff.tv <- function(parameters) {
-    if (parameters$coeff.tv && parameters$sfromchi) {
-        parameters$coeff.tv <- NULL
+check_coeff_tv <- function(parameters) {
+    if (parameters$coeff_tv && parameters$sfromchi) {
+        parameters$coeff_tv <- NULL
         parameters$minmaxeff <- c(parameters$tvmin, parameters$tvmax)
     } else {
         parameters$minmaxeff <- NULL
@@ -172,7 +172,7 @@ check.coeff.tv <- function(parameters) {
     parameters
 }
 
-check.vcex <- function(parameters) {
+check_vcex <- function(parameters) {
     if (parameters$vcex || parameters$cexfromchi) {
         parameters$vcexminmax <- c(parameters$vcexmin, parameters$vcexmax)
     } else {
@@ -185,59 +185,49 @@ check.vcex <- function(parameters) {
 #' Generate similitude graph
 #' 
 #' @param parameters list
-#' @param analysis.path of data
+#' @param analysis_path of data
 #' @return list of objects
 #' 
 #' @export
-generate.graph <- function(parameters, analysis.path) {
-    parameters <- check.coeff.tv(parameters)
-    parameters <- check.vcex(parameters)
+generate_graph <- function(parameters, analysis_path) {
+    parameters <- check_coeff_tv(parameters)
+    parameters <- check_vcex(parameters)
 
-    if (parameters$keep.coord) {
-        parameters$coords <- load.coords()
+    if (parameters$keep_coord) {
+        parameters$coords <- load_coords()
     } else {
         parameters$coords <- NULL
     }
 
-    data.definition <- load.data(parameters, analysis.path)
+    data_definition <- load_data(parameters, analysis_path)
 
-    selected.colmun <- check.selected.column(data.definition$paths$selected,
-        data.definition$matrix)
-    selection <- select.matrix.word(parameters, data.definition$matrix, selected.colmun)
+    selected_colmun <- check_selected_column(data_definition$paths$selected,
+        data_definition$matrix)
+    selection <- select_matrix_word(parameters, data_definition$matrix, selected_colmun)
 
-    sparse <- create.sparse(parameters, selection$matrix)
-    sparse <- check.inf(sparse)
+    sparse <- create_sparse(parameters, selection$matrix)
+    sparse <- check_inf(sparse)
 
-    valid.data <- check.word.parameter(parameters, sparse, selection$matrix,
+    valid_data <- check_word_parameter(parameters, sparse, selection$matrix,
         selection$index)
 
-    eff <- colSums(as.matrix(valid.data$matrix))
-    x <- list(mat = valid.data$sparse, eff = eff)
+    eff <- colSums(as.matrix(valid_data$matrix))
+    x <- list(mat = valid_data$sparse, eff = eff)
 
     do_simi(
         x,
         method = parameters$method,
         seuil = parameters$seuil,
-        p.type = parameters$type,
-        layout.type = parameters$layout,
-        max.tree = parameters$maxtree,
-        coeff.vertex = parameters$coeff.tv,
-        coeff_edge = parameters$coeff.te.range,
-        minmaxeff = parameters$minmaxeff,
-        vcexminmax = parameters$vcexminmax,
+        plot_type = parameters$type,
+        layout_type = parameters$layout,
+        max_tree = parameters$max_tree,
+        coeff_vertex = parameters$coeff_tv,
+        coeff_edge = parameters$coeff_te_range,
+        minmax_eff = parameters$minmaxeff,
+        vcex_minmax = parameters$vcexminmax,
         cex = parameters$cex,
         coords = parameters$coords,
         communities = parameters$communities,
         halo = parameters$halo
     )
-}
-
-create.graph <- function(data) {
-    data <- as.matrix(data)
-    network <- igraph::graph_from_adjacency_matrix(data, mode = 'undirected')
-
-    # Conta as arestas para cada par de vértices, atribui aos pesos das arestas
-    # e realiza a simplificação do grafo (reduz a quantidade de aresta para 1)
-    igraph::E(network)$weight <- igraph::count_multiple(network)
-    network <- igraph::simplify(network, edge.attr.comb = 'max')
 }
