@@ -136,7 +136,6 @@ check_word_parameter <- function(parameters, sparse, matrix_data, index) {
 
         if (length(row_sum)) sparse <- sparse[-which(row_sum == 0),]
         if (length(col_sum)) matrix_data <- matrix_data[, -which(col_sum == 0)]
-
     }
 
     list(sparse = sparse, matrix = matrix_data)
@@ -189,7 +188,7 @@ check_vcex <- function(parameters) {
 #' @return list of objects
 #' 
 #' @export
-generate_graph <- function(parameters, analysis_path) {
+generate_graph <- function(parameters, analysis_path = NULL, dtm = NULL) {
     parameters <- check_coeff_tv(parameters)
     parameters <- check_vcex(parameters)
 
@@ -199,17 +198,25 @@ generate_graph <- function(parameters, analysis_path) {
         parameters$coords <- NULL
     }
 
-    data_definition <- load_data(parameters, analysis_path)
+    if (is.null(dtm)) {
+        data_definition <- load_data(parameters, analysis_path)
+        selected_column <- check_selected_column(data_definition$paths$selected,
+            data_definition$matrix)
+        
+        selection <- select_matrix_word(parameters, data_definition$matrix,
+            selected_column)
+        matrix_data <- selection$matrix
+        index <- selection$index
+    } else {
+        matrix_data <- dtm
+        index <- NULL
+    }
 
-    selected_colmun <- check_selected_column(data_definition$paths$selected,
-        data_definition$matrix)
-    selection <- select_matrix_word(parameters, data_definition$matrix, selected_colmun)
-
-    sparse <- create_sparse(parameters, selection$matrix)
+    sparse <- create_sparse(parameters, matrix_data)
     sparse <- check_inf(sparse)
 
-    valid_data <- check_word_parameter(parameters, sparse, selection$matrix,
-        selection$index)
+    valid_data <- check_word_parameter(parameters, sparse, matrix_data,
+        index)
 
     eff <- colSums(as.matrix(valid_data$matrix))
     x <- list(mat = valid_data$sparse, eff = eff)

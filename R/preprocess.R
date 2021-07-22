@@ -1,5 +1,5 @@
 preprocess <- function(
-    file_path,
+    data,
     column,
     min_segment_size = 0,
     doc_id = NULL,
@@ -7,7 +7,7 @@ preprocess <- function(
     language = 'en',
     ...
 ) {
-    corpus <- create_corpus(file_path, column)
+    corpus <- create_corpus(data, column)
     corpus <- rainette::split_segments(corpus, segment_size = segment_size)
     
     dtm <- clean_corpus(corpus, language, ...)
@@ -20,9 +20,11 @@ preprocess <- function(
     list(uce_uc_table = uce_uc_table, dtm = dtm)
 }
 
-create_corpus <- function(file_path, column) {
-    file_data <- read.csv(file_path)
-    quanteda::corpus(file_data, text_field = column)
+create_corpus <- function(data, column) {
+    if (is.character(data) && file.exists(data)) {
+        data <- read.csv(data)
+    }
+    quanteda::corpus(data, text_field = column)
 }
 
 clean_corpus <- function(corpus, language, ...) {

@@ -1,41 +1,52 @@
-test_that('generate.graph and plot.graph returns correct types', {
+parameters <- list(
+    method = 'cooc', # 'Russel', 'binomial', etc.
+    keep_coord = FALSE,
+    type = 'simitxt',
+    seuil = 0.01, # float, NULL
+    layout = 'frutch', # 'random', 'circle', 'frutch', 'kawa', 'graphopt'
+    max_tree = TRUE,
+    coeff_vertex = 0,
+    coeff_te_range = c(1, 10), # c(min, max), NULL
+    coeff_tv = 0, # int, NULL
+    sfromchi = FALSE,
+    tvmin = 5,
+    tvmax = 30,
+    vcex = TRUE,
+    vcexmin = 1.0,
+    vcexmax = 2.5,
+    cex_from_chi = FALSE,
+    cex = 1.0,
+    communities = NULL, # int, NULL
+    halo = FALSE,
+    
+    # Used to plot
+    alpha = 0.20,
+    bystar = FALSE,
+    svg = FALSE,
+    cols = c(255, 0, 0, 255),
+    cola = c(200, 200, 200, 255),
+    label_v = 1,
+    label_e = 1,
+    edge_curved = TRUE
+)
+
+test_that('generate_graph and plot_graph returns correct types', {
     analysis_path <- '../../iramuteq_results/corpus_simitxt/'
-
-    parameters <- list(
-        method = 'cooc', # 'Russel', 'binomial', etc.
-        keep_coord = FALSE,
-        type = 'simitxt',
-        seuil = 0.01, # float, NULL
-        layout = 'frutch', # 'random', 'circle', 'frutch', 'kawa', 'graphopt'
-        max_tree = TRUE,
-        coeff_vertex = 0,
-        coeff_te_range = c(1, 10), # c(min, max), NULL
-        coeff_tv = 0, # int, NULL
-        sfromchi = FALSE,
-        tvmin = 5,
-        tvmax = 30,
-        vcex = TRUE,
-        vcexmin = 1.0,
-        vcexmax = 2.5,
-        cex_from_chi = FALSE,
-        cex = 1.0,
-        communities = NULL, # int, NULL
-        halo = FALSE,
-        
-        # Used to plot
-        alpha = 0.20,
-        bystar = FALSE,
-        svg = FALSE,
-        cols = c(255, 0, 0, 255),
-        cola = c(200, 200, 200, 255),
-        label_v = 1,
-        label_e = 1,
-        edge_curved = TRUE
-    )
-
     graph_simi <- generate_graph(parameters, analysis_path)
-
+    
     expect_type(graph_simi, 'list')
-    expect_type(plot_graph(graph_simi, parameters, plot_type = 'nplot',
-        filename = '../../images_test/graph_simi_refac.png'), 'double')
+    expect_type(
+        plot_graph(
+            graph_simi, parameters, plot_type = 'nplot',
+            filename = '../../images_test/graph_simi_refac.png'
+        ),
+        'double'
+    )
+})
+
+test_that('passing dtm to generate_graph returns list', {
+    result <- preprocess('../../data_test/corpus.csv', 'corpus')
+    graph_simi <- generate_graph(parameters, dtm = result$dtm)
+    
+    expect_type(graph_simi, 'list')
 })
