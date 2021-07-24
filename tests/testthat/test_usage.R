@@ -30,11 +30,14 @@ parameters <- list(
     edge_curved = TRUE
 )
 
-test_that('generate_graph and plot_graph returns correct types', {
-    analysis_path <- '../../iramuteq_results/corpus_simitxt/'
-    graph_simi <- generate_graph(parameters, analysis_path)
-    
+result <- preprocess('../../data_test/corpus.csv', 'corpus', min_docfreq = 4)
+graph_simi <- generate_graph(parameters, result$dtm)
+
+test_that('generate_graph returns list', {
     expect_type(graph_simi, 'list')
+})
+
+test_that('plot_graph returns double', {
     expect_type(
         plot_graph(
             graph_simi, parameters, plot_type = 'nplot',
@@ -42,11 +45,4 @@ test_that('generate_graph and plot_graph returns correct types', {
         ),
         'double'
     )
-})
-
-test_that('passing dtm to generate_graph returns list', {
-    result <- preprocess('../../data_test/corpus.csv', 'corpus')
-    graph_simi <- generate_graph(parameters, dtm = result$dtm)
-    
-    expect_type(graph_simi, 'list')
 })

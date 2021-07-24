@@ -10,42 +10,6 @@ norm_vec <- function(vector, min, max) {
     (vector - vector_range[1]) * fac + min
 }
 
-data_paths <- function(analysis_path, actives = FALSE) {
-    if (actives) {
-        actives_path <- paste0(analysis_path, 'actives.csv')
-    } else {
-        actives_path <- NULL
-    }
-
-    matrix_data_path <- paste0(analysis_path, 'mat01.csv')
-    selected_col <- paste0(analysis_path, 'selected.csv')
-
-    list(matrix_path = matrix_data_path, selected = selected_col,
-        actives_path = actives_path)
-}
-
-load_data <- function(parameters, analysis_path) {
-    if (parameters$type != 'simimatrix' ||
-        parameters$type == 'simiclustermatrix') {
-
-        paths_list <- data_paths(analysis_path, actives = TRUE)
-
-        matrix_data <- Matrix::readMM(paths_list$matrix_path)
-        actives <- read.table(paths_list$actives_path, sep = '\t', quote = '"')
-
-        colnames(matrix_data) <- actives[, 1]
-    } else if (parameters$type == 'simimatrix' ||
-        parameters$type == 'simiclustermatrix') {
-
-        paths_list <- data_paths(analysis_path)
-
-        matrix_data <- read.csv2(paths_list$matrix_path)
-        matrix_data <- as.matrix(matrix_data)
-    }
-
-    list(paths = paths_list, matrix = matrix_data)
-}
-
 load_coords <- function() {
     coords <- try(coords, TRUE)
     load(paste0(analysis_path, 'RData.RData'))
@@ -55,42 +19,6 @@ load_coords <- function() {
     }
 
     coords
-}
-
-select_matrix_word <- function(parameters, matrix_data, selected_column) {
-    if ('word' %in% parameters) {
-        word <- TRUE
-        index <- parameters$word + 1
-    } else {
-        word <- FALSE
-        index <- NULL
-    }
-
-    if (!word) {
-        matrix_data <- matrix_data[, selected_column]
-    } else {
-        forme <- colnames(matrix_data)[index]
-
-        if (!index %in% selected_column) {
-            selected_column <- append(selected_column, index)
-        }
-
-        matrix_data <- matrix_data[, selected_column]
-        index <- which(colnames(matrix_data) == forme)
-    }
-
-    list(matrix = matrix_data, index = index)
-}
-
-check_selected_column <- function(sel_col_file, matrix_data) {
-    if (file.exists(sel_col_file)) {
-        sel_col <- read.csv2(sel_col_file, header = FALSE)
-        sel_col <- sel_col[, 1] + 1
-    } else {
-        sel_col <- 1:ncol(matrix_data)
-    }
-
-    sel_col
 }
 
 check_inf <- function(sparse) {
@@ -125,9 +53,9 @@ check_inf <- function(sparse) {
     sparse
 }
 
-check_word_parameter <- function(parameters, sparse, matrix_data, index) {
+check_word_parameter <- function(parameters, sparse, matrix_data) {
     if ('word' %in% parameters) {
-        sparse <- graph_word(sparse, index)
+        sparse <- graph_word(sparse, parameters$word)
         col_sum <- colSums(sparse)
 
         if (length(col_sum)) sparse <- sparse[, -which(col_sum == 0)]
@@ -188,7 +116,7 @@ check_vcex <- function(parameters) {
 #' @return list of objects
 #' 
 #' @export
-generate_graph <- function(parameters, analysis_path = NULL, dtm = NULL) {
+generate_graph <- function(parameters, dtm) {
     parameters <- check_coeff_tv(parameters)
     parameters <- check_vcex(parameters)
 
@@ -198,25 +126,10 @@ generate_graph <- function(parameters, analysis_path = NULL, dtm = NULL) {
         parameters$coords <- NULL
     }
 
-    if (is.null(dtm)) {
-        data_definition <- load_data(parameters, analysis_path)
-        selected_column <- check_selected_column(data_definition$paths$selected,
-            data_definition$matrix)
-        
-        selection <- select_matrix_word(parameters, data_definition$matrix,
-            selected_column)
-        matrix_data <- selection$matrix
-        index <- selection$index
-    } else {
-        matrix_data <- dtm
-        index <- NULL
-    }
-
-    sparse <- create_sparse(parameters, matrix_data)
+    sparse <- create_sparse(parameters, dtm)
     sparse <- check_inf(sparse)
 
-    valid_data <- check_word_parameter(parameters, sparse, matrix_data,
-        index)
+    valid_data <- check_word_parameter(parameters, sparse, dtm)
 
     eff <- colSums(as.matrix(valid_data$matrix))
     x <- list(mat = valid_data$sparse, eff = eff)
