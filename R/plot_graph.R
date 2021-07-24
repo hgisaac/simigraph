@@ -149,6 +149,7 @@ plot_graph <- function(graph_simi, parameters, ...) {
     coords <- plot_simi(
         graph_simi,
         ...,
+        plot_type = parameters$plot_type,
         vertex_color = parameters$cols,
         vertex_label_color = vertex_label_color,
         vertex_label_cex = label_cex,

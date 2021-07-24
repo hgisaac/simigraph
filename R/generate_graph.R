@@ -24,9 +24,9 @@
 # Yule a, b, c, d  (ad - bc) / (ad + bc)
 # Yule2  a, b, c, d  (sqrt(ad) - sqrt(bc)) / (sqrt(ad) + sqrt(bc))
 
-create_graph <- function(data_matrix) {
-    igraph::graph_from_adjacency_matrix(data_matrix, mode = 'lower',
-        weighted = TRUE)
+create_graph <- function(data_matrix, mode = 'lower', weighted = TRUE, ...) {
+    igraph::graph_from_adjacency_matrix(data_matrix, mode = mode,
+        weighted = weighted, ...)
 }
 
 invert_weights <- function(simi_graph, method) {
@@ -144,67 +144,6 @@ define_communities <- function(communities_number, simi_graph) {
     if (!is.null(communities_function)) {
         return(communities_function(simi_graph))
     }
-}
-
-do_simi <- function(
-    x,
-    method = 'cooc',
-    seuil = NULL,
-    plot_type = 'nplot',
-    layout_type = 'frutch',
-    max_tree = TRUE,
-    coeff_vertex = NULL,
-    coeff_edge = NULL,
-    minmax_eff = NULL,
-    vcex_minmax = NULL,
-    cex = 1,
-    coords = NULL,
-    communities = NULL,
-    halo = FALSE
-) {
-    simi_graph <- create_graph(x$mat)
-
-    if (max_tree) {
-        simi_graph <- define_weights(simi_graph, method)
-    }
-    
-    simplified_graph <- simplify_graph(simi_graph, seuil,
-        x$mat, x$eff)
-    
-    graph_labels <- get_labels(simplified_graph$simi_graph, seuil, method)
-    
-    edge_width <- define_width(simplified_graph$simi_graph, coeff_edge)
-
-    if (!is.null(minmax_eff[1])) {
-        coeff.vertex <- norm_vec(x$eff, minmax_eff[1], minmax_eff[2])
-    }
-
-    if (!is.null(vcex_minmax[1])) {
-        cex <- norm_vec(x$eff, vcex_minmax[1], vcex_minmax[2])
-    }
-
-    graph_layout <- define_layout(plot_type, layout_type, coords,
-        simplified_graph$simi_graph)
-
-    if (!is.null(communities)) {
-        communities <- define_communities(communities,
-            simplified_graph$simi_graph)
-    }
-    
-    list(
-        graph = simplified_graph$simi_graph,
-        mat_eff = simplified_graph$mat_eff,
-        eff = coeff_vertex,
-        mat = x$mat,
-        halo = halo,
-        layout = graph_layout,
-        v_label = graph_labels$vertices,
-        we_width = edge_width,
-        we_label = graph_labels$edges,
-        communities = communities,
-        label_cex = cex,
-        elim = simplified_graph$elim
-    )
 }
 
 make_bin <- function(cs, a, i, j, nb) {
@@ -346,19 +285,19 @@ compute_similarity <- function(parameters, matrix_data) {
 check_coeff_tv <- function(parameters) {
     if (parameters$coeff_tv && parameters$sfromchi) {
         parameters$coeff_tv <- NULL
-        parameters$minmaxeff <- c(parameters$tvmin, parameters$tvmax)
+        parameters$minmax_eff <- c(parameters$tvmin, parameters$tvmax)
     } else {
-        parameters$minmaxeff <- NULL
+        parameters$minmax_eff <- NULL
     }
 
     parameters
 }
 
 check_vcex <- function(parameters) {
-    if (parameters$vcex || parameters$cexfromchi) {
-        parameters$vcexminmax <- c(parameters$vcexmin, parameters$vcexmax)
+    if (parameters$vcex || parameters$cex_from_chi) {
+        parameters$vcex_minmax <- c(parameters$vcex_min, parameters$vcex_max)
     } else {
-        parameters$vcexminmax <- NULL
+        parameters$vcex_minmax <- NULL
     }
 
     parameters
@@ -387,22 +326,72 @@ generate_graph <- function(parameters, dtm) {
     valid_data <- check_word_parameter(parameters, sparse, dtm)
 
     eff <- colSums(as.matrix(valid_data$matrix))
-    x <- list(mat = valid_data$sparse, eff = eff)
 
-    do_simi(
-        x,
-        method = parameters$method,
-        seuil = parameters$seuil,
-        plot_type = parameters$type,
-        layout_type = parameters$layout,
-        max_tree = parameters$max_tree,
-        coeff_vertex = parameters$coeff_tv,
-        coeff_edge = parameters$coeff_te_range,
-        minmax_eff = parameters$minmaxeff,
-        vcex_minmax = parameters$vcexminmax,
-        cex = parameters$cex,
-        coords = parameters$coords,
+    simi_graph <- create_graph(valid_data$sparse)
+
+    if (parameters$max_tree) {
+        simi_graph <- define_weights(simi_graph, parameters$method)
+    }
+    
+    simplified_graph <- simplify_graph(
+        simi_graph,
+        parameters$seuil,
+        valid_data$sparse, eff
+    )
+    
+    graph_labels <- get_labels(
+        simplified_graph$simi_graph,
+        parameters$seuil,
+        parameters$method
+    )
+    
+    edge_width <- define_width(
+        simplified_graph$simi_graph,
+        parameters$coeff_edge_range
+    )
+
+    if (!is.null(parameters$minmax_eff[1])) {
+        coeff.vertex <- norm_vec(
+            eff,
+            parameters$minmax_eff[1],
+            parameters$minmax_eff[2]
+        )
+    }
+
+    if (!is.null(parameters$vcex_minmax[1])) {
+        cex <- norm_vec(
+            eff,
+            parameters$vcex_minmax[1],
+            parameters$vcex_minmax[2]
+        )
+    }
+
+    graph_layout <- define_layout(
+        parameters$plot_type,
+        parameters$layout,
+        parameters$coords,
+        simplified_graph$simi_graph
+    )
+
+    if (!is.null(parameters$communities)) {
+        parameters$communities <- define_communities(
+            parameters$communities,
+            simplified_graph$simi_graph
+        )
+    }
+    
+    list(
+        graph = simplified_graph$simi_graph,
+        mat_eff = simplified_graph$mat_eff,
+        eff = parameters$coeff_tv, # coeff_vertex
+        mat = valid_data$matrix,
+        halo = parameters$halo,
+        layout = graph_layout,
+        v_label = graph_labels$vertices,
+        we_width = edge_width,
+        we_label = graph_labels$edges,
         communities = parameters$communities,
-        halo = parameters$halo
+        label_cex = cex,
+        elim = simplified_graph$elim
     )
 }

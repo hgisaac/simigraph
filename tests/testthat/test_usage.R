@@ -3,17 +3,18 @@ parameters <- list(
     keep_coord = FALSE,
     type = 'simitxt',
     seuil = 0.01, # float, NULL
+    plot_type = 'nplot',
     layout = 'frutch', # 'random', 'circle', 'frutch', 'kawa', 'graphopt'
     max_tree = TRUE,
     coeff_vertex = 0,
-    coeff_te_range = c(1, 10), # c(min, max), NULL
+    coeff_edge_range = c(1, 10), # c(min, max), NULL
     coeff_tv = 0, # int, NULL
     sfromchi = FALSE,
     tvmin = 5,
     tvmax = 30,
     vcex = TRUE,
-    vcexmin = 1.0,
-    vcexmax = 2.5,
+    vcex_min = 1.0,
+    vcex_max = 2.5,
     cex_from_chi = FALSE,
     cex = 1.0,
     communities = NULL, # int, NULL
@@ -40,7 +41,8 @@ test_that('generate_graph returns list', {
 test_that('plot_graph returns double', {
     expect_type(
         plot_graph(
-            graph_simi, parameters, plot_type = 'nplot',
+            graph_simi,
+            parameters,
             filename = '../../images_test/graph_simi_refac.png'
         ),
         'double'
