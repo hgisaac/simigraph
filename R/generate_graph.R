@@ -25,8 +25,12 @@
 # Yule2  a, b, c, d  (sqrt(ad) - sqrt(bc)) / (sqrt(ad) + sqrt(bc))
 
 create_graph <- function(data_matrix, mode = 'lower', weighted = TRUE, ...) {
-    igraph::graph_from_adjacency_matrix(data_matrix, mode = mode,
-        weighted = weighted, ...)
+    igraph::graph_from_adjacency_matrix(
+        data_matrix,
+        mode = mode,
+        weighted = weighted,
+        ...
+    )
 }
 
 invert_weights <- function(simi_graph, method) {
@@ -268,15 +272,25 @@ compute_similarity <- function(parameters, matrix_data) {
         sparse <- square_matrix(matrix_data)
 
     } else if (parameters$method == 'Russel') {
-        sparse <- proxy::simil(matrix_data, method = parameters$method,
-            diag = TRUE, upper = TRUE, by_rows = FALSE)
+        sparse <- proxy::simil(
+            matrix_data,
+            method = parameters$method,
+            diag = TRUE,
+            upper = TRUE,
+            by_rows = FALSE
+        )
 
     } else if (parameters$method == 'binomial') {
         sparse <- binom_sim(matrix_data)
 
     } else {
-        sparse <- proxy::simil(as.matrix(matrix_data), method = parameters$method,
-            diag = TRUE, upper = TRUE, by_rows = FALSE)
+        sparse <- proxy::simil(
+            as.matrix(matrix_data),
+            method = parameters$method,
+            diag = TRUE,
+            upper = TRUE,
+            by_rows = FALSE
+        )
     }
 
     as.matrix(stats::as.dist(sparse, diag = TRUE, upper = TRUE))

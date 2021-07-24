@@ -11,8 +11,11 @@ preprocess <- function(
     corpus <- rainette::split_segments(corpus, segment_size = segment_size)
     
     dtm <- clean_corpus(corpus, language, ...)
-    dtm <- rainette::merge_segments(dtm, min_segment_size = min_segment_size,
-        doc_id = doc_id)
+    dtm <- rainette::merge_segments(
+        dtm,
+        min_segment_size = min_segment_size,
+        doc_id = doc_id
+    )
     
     uce_uc_table <- create_uce_uc_table(dtm)
     dtm <- group_by_uc(dtm)

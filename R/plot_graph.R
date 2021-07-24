@@ -1,6 +1,10 @@
-open_file_graph <- function (filename, width = 800, height = 800, quality = 100,
-    svg = FALSE) {
-
+open_file_graph <- function (
+    filename,
+    width = 800,
+    height = 800,
+    quality = 100,
+    svg = FALSE
+) {
 	if (Sys.info()["sysname"] == 'Darwin') {
         width <- width / 74.97
         height <- height / 74.97
@@ -105,8 +109,12 @@ apply_plot_definitions <- function(parameters, graph_simi) {
         }
     }
 
-    list(vertex_size = vertex_size, leg = leg, chi_vertex_size = chi_vertex_size,
-        vertex_label_color = vertex_label_color)
+    list(
+        vertex_size = vertex_size,
+        leg = leg,
+        chi_vertex_size = chi_vertex_size,
+        vertex_label_color = vertex_label_color
+    )
 }
 
 plot_graph <- function(graph_simi, parameters, ...) {
@@ -122,8 +130,11 @@ plot_graph <- function(graph_simi, parameters, ...) {
         }
 
         if (parameters$sfromchi) {
-            vertex_size <- norm_vec(chd_definition$to_black, parameters$tvmin,
-                parameters$tvmax)
+            vertex_size <- norm_vec(
+                chd_definition$to_black,
+                parameters$tvmin,
+                parameters$tvmax
+            )
         } else {
             vertex_size <- NULL
         }
@@ -168,27 +179,46 @@ define_vertex_label_color <- function(vertex_label_cex, vertex_label_color) {
     
     if (length(vertex_label_color) == 1) {
         for (i in seq_len(length(alphas))) {
-            new_vertex_label_color <- append(new_vertex_label_color,
-                adjustcolor(vertex_label_color, alpha = alphas[i]))
+            new_vertex_label_color <- append(
+                new_vertex_label_color,
+                adjustcolor(vertex_label_color, alpha = alphas[i])
+            )
         }
     } else {
         for (i in seq_len(length(alphas))) {
-            new_vertex_label_color <- append(new_vertex_label_color,
-                adjustcolor(vertex_label_color[i], alpha = alphas[i]))
+            new_vertex_label_color <- append(
+                new_vertex_label_color,
+                adjustcolor(vertex_label_color[i], alpha = alphas[i])
+            )
         }
     }
 
     new_vertex_label_color
 }
 
-n_plot <- function(filename, width, height, svg, bg, leg, graph_simi, vertex_size,
-    vertex_color, label_cex, edge_color, edge_curved, vertex_label_color) {
-    
+n_plot <- function(
+    filename,
+    width,
+    height,
+    svg,
+    bg,
+    leg,
+    graph_simi,
+    vertex_size,
+    vertex_color,
+    label_cex,
+    edge_color,
+    edge_curved,
+    vertex_label_color
+) {    
     open_file_graph(filename, width = width, height = height, svg = svg)
     par(mar = c(2, 2, 2, 2), bg = bg, pch = ' ')
     
     if (!is.null(leg)) {
-        layout(matrix(c(1, 2), 1, 2, byrow = TRUE), widths = c(3, lcm(7)))
+        layout(
+            matrix(c(1, 2), 1, 2, byrow = TRUE),
+            widths = c(3, lcm(7))
+        )
         par(mar = c(2, 2, 1, 0))
     }
 
@@ -251,9 +281,13 @@ n_plot <- function(filename, width, height, svg, bg, leg, graph_simi, vertex_siz
     graph_simi$layout
 }
 
-tk_plot <- function(graph_simi, vertex_size, vertex_color, vertex_label_color,
-    edge_color) {
-    
+tk_plot <- function(
+    graph_simi,
+    vertex_size,
+    vertex_color,
+    vertex_label_color,
+    edge_color
+) { 
     id <- igraph::tkplot(
         graph_simi$graph,
         vertex.label = graph_simi$v_label,
@@ -311,7 +345,10 @@ plot_simi <- function(
     }
 
     if (cexalpha) {
-        vertex_label_color <- define_vertex_label_color(label_cex, vertex_label_color)
+        vertex_label_color <- define_vertex_label_color(
+            label_cex,
+            vertex_label_color
+        )
     }
 
     if (is.null(vertex_size)) {
