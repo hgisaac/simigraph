@@ -160,3 +160,187 @@ plot_graph <- function(graph_simi, parameters, ...) {
         svg = parameters$svg
     )
 }
+
+define_vertex_label_color <- function(vertex_label_cex, vertex_label_color) {
+    alphas <- norm_vec(vertex_label_cex, 0.5, 1)
+    new_vertex_label_color <- c()
+    
+    if (length(vertex_label_color) == 1) {
+        for (i in seq_len(length(alphas))) {
+            new_vertex_label_color <- append(new_vertex_label_color,
+                adjustcolor(vertex_label_color, alpha = alphas[i]))
+        }
+    } else {
+        for (i in seq_len(length(alphas))) {
+            new_vertex_label_color <- append(new_vertex_label_color,
+                adjustcolor(vertex_label_color[i], alpha = alphas[i]))
+        }
+    }
+
+    new_vertex_label_color
+}
+
+n_plot <- function(filename, width, height, svg, bg, leg, graph_simi, vertex_size,
+    vertex_color, label_cex, edge_color, edge_curved, vertex_label_color) {
+    
+    open_file_graph(filename, width = width, height = height, svg = svg)
+    par(mar = c(2, 2, 2, 2), bg = bg, pch = ' ')
+    
+    if (!is.null(leg)) {
+        layout(matrix(c(1, 2), 1, 2, byrow = TRUE), widths = c(3, lcm(7)))
+        par(mar = c(2, 2, 1, 0))
+    }
+
+    if (is.null(graph_simi$communities)) {
+        plot(
+            graph_simi$graph,
+            vertex.label = '',
+            edge.width = graph_simi$we_width,
+            vertex.size = vertex_size,
+            vertex.color = vertex_color,
+            vertex.label.color = 'white',
+            edge.label = graph_simi$we_label,
+            edge.label.cex = label_cex,
+            edge.color = edge_color,
+            vertex.label.cex = 0,
+            layout = graph_simi$layout,
+            edge.curved = edge_curved
+        )
+    } else {
+        if (graph_simi$halo) {
+            mark_groups <- igraph::communities(graph_simi$communities)
+        } else {
+            mark_groups <- NULL
+        }
+
+        plot(
+            graph_simi$communities,
+            graph_simi$graph,
+            vertex.label = '',
+            edge.width = graph_simi$we_width,
+            vertex.size = vertex_size,
+            vertex.color = vertex_color,
+            vertex.label.color = 'white',
+            edge.label = graph_simi$we_label,
+            edge.label.cex = label_cex,
+            edge.color = edge_color,
+            vertex.label.cex = 0,
+            layout = graph_simi$layout,
+            mark.groups = mark_groups,
+            edge.curved = edge_curved
+        )
+    }
+    
+    txt_layout <- igraph::norm_coords(graph_simi$layout)
+    text(
+        txt_layout[, 1],
+        txt_layout[, 2],
+        graph_simi$v_label,
+        cex = label_cex,
+        col = vertex_label_color
+    )
+    
+    if (!is.null(leg)) {
+        par(mar = c(0, 0, 0, 0))
+        plot(0, axes = FALSE, pch = '')
+        legend(x = 'center', leg$unetoile, fill = leg$gcol)
+    }
+    
+    dev.off()
+    graph_simi$layout
+}
+
+tk_plot <- function(graph_simi, vertex_size, vertex_color, vertex_label_color,
+    edge_color) {
+    
+    id <- igraph::tkplot(
+        graph_simi$graph,
+        vertex.label = graph_simi$v_label,
+        edge.width = graph_simi$we_width,
+        vertex.size = vertex_size,
+        vertex.color = vertex_color,
+        vertex.label.color = vertex_label_color,
+        edge.label = graph_simi$we_label,
+        edge.color = edge_color,
+        layout = graph_simi$layout
+    )
+
+    coords <- igraph::tkplot.getcoords(id)
+    ok <- try(
+        coords <- igraph::tkplot.getcoords(id),
+        TRUE
+    )
+    
+    while (is.matrix(ok)) {
+        ok <- try(
+            coords <- igraph::tkplot.getcoords(id),
+            TRUE
+        )
+        Sys.sleep(0.5)
+    }
+    
+    igraph::tkplot.off()
+    coords
+}
+
+plot_simi <- function(
+    graph_simi,
+    plot_type = 'nplot',
+    filename = NULL,
+    communities = NULL,
+    vertex_color = 'red',
+    edge_color = 'black',
+    vertex_label_color = 'black',
+    vertex_label_cex = NULL,
+    vertex_size = NULL,
+    leg = NULL,
+    width = 800,
+    height = 800,
+    alpha = 0.1,
+    cexalpha = FALSE,
+    movie = NULL,
+    edge_curved = TRUE,
+    svg = FALSE,
+    bg = 'white'
+) {
+    if (!is.null(vertex_label_cex)) {
+        label_cex <- vertex_label_cex
+    } else {
+        label_cex <- graph_simi$label_cex
+    }
+
+    if (cexalpha) {
+        vertex_label_color <- define_vertex_label_color(label_cex, vertex_label_color)
+    }
+
+    if (is.null(vertex_size)) {
+        vertex_size <- graph_simi$eff
+    }
+
+    if (plot_type == 'nplot') {
+        plot_result <- n_plot(
+            filename,
+            width,
+            height,
+            svg,
+            bg,
+            leg,
+            graph_simi,
+            vertex_size,
+            vertex_color,
+            label_cex,
+            edge_color,
+            edge_curved,
+            vertex_label_color
+        )
+    } else if (plot_type == 'tkplot') {
+        plot_result <- tk_plot(
+            graph_simi,
+            vertex_size,
+            vertex_color,
+            vertex_label_color,
+            edge_color
+        )
+    }
+    plot_result
+}
