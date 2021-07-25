@@ -401,7 +401,7 @@ generate_graph <- function(
     list(
         graph = simplified_graph$simi_graph,
         mat_eff = simplified_graph$mat_eff,
-        eff = coeff_vertex,
+        coeff_vertex = coeff_vertex,
         mat = dtm,
         layout = graph_layout,
         v_label = graph_labels$vertices,

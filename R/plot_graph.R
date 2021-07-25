@@ -68,65 +68,91 @@ apply_chd <- function(parameters, dm) {
         chi_vertex_size = chi_vertex_size)
 }
 
-apply_plot_definitions <- function(parameters, graph_simi) {
+apply_plot_definitions <- function(
+    label_cex,
+    eff,
+    tmp_chi,
+    cex_from_chi,
+    vcex_minmax,
+    cex,
+    sfromchi,
+    minmax_eff
+) {
     vertex_label_color <- 'black'
     chi_vertex_size <- 1
-    leg <- NULL
 
-    if ((parameters$type == 'clustersimitxt' &&
-        parameters$tmpchi) ||
-        parameters$type %in% c('simimatrix', 'simiclustermatrix') &&
-        'tmpchi' %in% parameters) {
-        
-        lchi <- read.table(parameters$tmpchi)
+    if (!is.null(tmp_chi)) {
+        lchi <- read.table(tmp_chi)
         lchi <- lchi[, 1]
         lchi <- lchi[sel_col]
     }
 
-    if (parameters$type %in% c('clustersimitxt', 'simimatrix', 'simiclustermatrix') &&
-        parameters$cex_from_chi) {
-        
-        label_cex <- norm_vec(lchi, parameters$vcexmin, parameters$vcexmax)
+    if (cex_from_chi) {
+        label_cex <- norm_vec(lchi, vcex_minmax[1], vcex_minmax[2])
     } else {
-        if (is.null(parameters$vcexmin)) {
-            label_cex <- parameters$cex
+        if (is.null(vcex_minmax)) {
+            label_cex <- cex
         } else {
-            label_cex <- graph_simi$label_cex
+            label_cex <- label_cex
         }
     }
 
-    if (parameters$type %in% c('clustersimitxt', 'simimatrix', 'simiclustermatrix') &&
-        parameters$sfromchi) {
-
-        vertex_size <- norm_vec(lchi, parameters$tvmin, parameters$tvmax)
+    if (sfromchi) {
+        vertex_size <- norm_vec(lchi, minmax_eff[1], minmax_eff[2])
         
         if (!length(vertex_size)) vertex_size <- 0
     } else {
-        if (is.null(parameters$tvmin)) {
+        if (is.null(minmax_eff)) {
             vertex_size <- 0
         } else {
-            vertex_size <- graph_simi$eff
+            vertex_size <- eff
         }
     }
 
     list(
         vertex_size = vertex_size,
-        leg = leg,
         chi_vertex_size = chi_vertex_size,
         vertex_label_color = vertex_label_color
     )
 }
 
-plot_graph <- function(graph_simi, parameters, halo = FALSE, ...) {
-    if (parameters$bystar) {
+plot_graph <- function(
+    graph_simi,
+    coeff_vertex,
+    cex_from_chi,
+    cex,
+    sfromchi,
+    minmax_eff,
+    vcex_minmax,
+    halo = FALSE,
+    plot_type = 'nplot',
+    filename = NULL,
+    communities = NULL,
+    edge_color = 'black',
+    vertex_label_color = 'black',
+    vertex_label_cex = NULL,
+    vertex_size = NULL,
+    leg = NULL,
+    width = 800,
+    height = 800,
+    alpha = 0.1,
+    cexalpha = FALSE,
+    edge_curved = TRUE,
+    svg = FALSE,
+    bg = 'white',
+    tmp_chi = NULL,
+    vertex_color = c(255, 0, 0, 255),
+    bystar = FALSE
+) {
+    if (bystar) {
         chd_definition <- apply_chd(parameters, matrix_data)
         vertex_label_color <- chd_definition$vertex_label_color
         leg <- chd_definition$leg
 
         if (parameters$cex_from_chi) {
-            label_cex <- chd_definition$chi_vertex_size
+            vertex_label_cex <- chd_definition$chi_vertex_size
         } else {
-            label_cex <- parameters$cex
+            vertex_label_cex <- parameters$cex
         }
 
         if (parameters$sfromchi) {
@@ -139,39 +165,78 @@ plot_graph <- function(graph_simi, parameters, halo = FALSE, ...) {
             vertex_size <- NULL
         }
     } else {
-        plot_definitions <- apply_plot_definitions(parameters, graph_simi)
+        plot_definitions <- apply_plot_definitions(
+            vertex_label_cex,
+            coeff_vertex,
+            tmp_chi,
+            cex_from_chi,
+            vcex_minmax,
+            cex,
+            sfromchi,
+            minmax_eff
+        )
         vertex_size <- plot_definitions$vertex_size
-        leg <- plot_definitions$leg
-        label_cex <- plot_definitions$chi_vertex_size
+        leg <- NULL
+        vertex_label_cex <- plot_definitions$chi_vertex_size
         vertex_label_color <- plot_definitions$vertex_label_color
     }
 
-    if (!is.null(graph_simi$communities)) {
-        colm <- rainbow(length(graph_simi$communities))
+    if (!is.null(communities)) {
+        colm <- rainbow(length(communities))
 
         if (vertex_size != 0 || halo) {
             vertex_label_color <- 'black'
-            parameters$cols <- colm[igraph::membership(graph_simi$communities)]
+            vertex_color <- colm[igraph::membership(communities)]
         } else {
-            vertex_label_color <- colm[igraph::membership(graph_simi$communities)]
+            vertex_label_color <- colm[igraph::membership(communities)]
         }
     }
 
-    coords <- plot_simi(
-        graph_simi,
-        ...,
-        plot_type = parameters$plot_type,
-        vertex_color = parameters$cols,
-        vertex_label_color = vertex_label_color,
-        vertex_label_cex = label_cex,
-        vertex_size = vertex_size,
-        edge_color = parameters$cola,
-        leg = leg,
-        alpha = parameters$alpha,
-        edge_curved = parameters$edge_curved,
-        svg = parameters$svg,
-        halo = halo
-    )
+    if (!is.null(vertex_label_cex)) {
+        vertex_label_cex <- vertex_label_cex
+    } else {
+        vertex_label_cex <- graph_simi$label_cex
+    }
+
+    if (cexalpha) {
+        vertex_label_color <- define_vertex_label_color(
+            vertex_label_cex,
+            vertex_label_color
+        )
+    }
+
+    if (is.null(vertex_size)) {
+        vertex_size <- graph_simi$coeff_vertex
+    }
+
+    if (plot_type == 'nplot') {
+        plot_result <- n_plot(
+            filename,
+            width,
+            height,
+            svg,
+            bg,
+            leg,
+            graph_simi,
+            vertex_size,
+            vertex_color,
+            vertex_label_cex,
+            edge_color,
+            edge_curved,
+            vertex_label_color,
+            halo
+        )
+    } else if (plot_type == 'tkplot') {
+        plot_result <- tk_plot(
+            graph_simi,
+            vertex_size,
+            vertex_color,
+            vertex_label_color,
+            edge_color
+        )
+    }
+    
+    plot_result
 }
 
 define_vertex_label_color <- function(vertex_label_cex, vertex_label_color) {
@@ -318,71 +383,4 @@ tk_plot <- function(
     
     igraph::tkplot.off()
     coords
-}
-
-plot_simi <- function(
-    graph_simi,
-    plot_type = 'nplot',
-    filename = NULL,
-    communities = NULL,
-    vertex_color = 'red',
-    edge_color = 'black',
-    vertex_label_color = 'black',
-    vertex_label_cex = NULL,
-    vertex_size = NULL,
-    leg = NULL,
-    width = 800,
-    height = 800,
-    alpha = 0.1,
-    cexalpha = FALSE,
-    movie = NULL,
-    edge_curved = TRUE,
-    svg = FALSE,
-    bg = 'white',
-    halo
-) {
-    if (!is.null(vertex_label_cex)) {
-        label_cex <- vertex_label_cex
-    } else {
-        label_cex <- graph_simi$label_cex
-    }
-
-    if (cexalpha) {
-        vertex_label_color <- define_vertex_label_color(
-            label_cex,
-            vertex_label_color
-        )
-    }
-
-    if (is.null(vertex_size)) {
-        vertex_size <- graph_simi$eff
-    }
-
-    if (plot_type == 'nplot') {
-        plot_result <- n_plot(
-            filename,
-            width,
-            height,
-            svg,
-            bg,
-            leg,
-            graph_simi,
-            vertex_size,
-            vertex_color,
-            label_cex,
-            edge_color,
-            edge_curved,
-            vertex_label_color,
-            halo
-        )
-    } else if (plot_type == 'tkplot') {
-        plot_result <- tk_plot(
-            graph_simi,
-            vertex_size,
-            vertex_color,
-            vertex_label_color,
-            edge_color
-        )
-    }
-    plot_result
 }
