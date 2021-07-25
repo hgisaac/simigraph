@@ -117,7 +117,7 @@ apply_plot_definitions <- function(parameters, graph_simi) {
     )
 }
 
-plot_graph <- function(graph_simi, parameters, ...) {
+plot_graph <- function(graph_simi, parameters, halo = FALSE, ...) {
     if (parameters$bystar) {
         chd_definition <- apply_chd(parameters, matrix_data)
         vertex_label_color <- chd_definition$vertex_label_color
@@ -149,7 +149,7 @@ plot_graph <- function(graph_simi, parameters, ...) {
     if (!is.null(graph_simi$communities)) {
         colm <- rainbow(length(graph_simi$communities))
 
-        if (vertex_size != 0 || graph_simi$halo) {
+        if (vertex_size != 0 || halo) {
             vertex_label_color <- 'black'
             parameters$cols <- colm[igraph::membership(graph_simi$communities)]
         } else {
@@ -169,7 +169,8 @@ plot_graph <- function(graph_simi, parameters, ...) {
         leg = leg,
         alpha = parameters$alpha,
         edge_curved = parameters$edge_curved,
-        svg = parameters$svg
+        svg = parameters$svg,
+        halo = halo
     )
 }
 
@@ -209,7 +210,8 @@ n_plot <- function(
     label_cex,
     edge_color,
     edge_curved,
-    vertex_label_color
+    vertex_label_color,
+    halo
 ) {    
     open_file_graph(filename, width = width, height = height, svg = svg)
     par(mar = c(2, 2, 2, 2), bg = bg, pch = ' ')
@@ -238,7 +240,7 @@ n_plot <- function(
             edge.curved = edge_curved
         )
     } else {
-        if (graph_simi$halo) {
+        if (halo) {
             mark_groups <- igraph::communities(graph_simi$communities)
         } else {
             mark_groups <- NULL
@@ -336,7 +338,8 @@ plot_simi <- function(
     movie = NULL,
     edge_curved = TRUE,
     svg = FALSE,
-    bg = 'white'
+    bg = 'white',
+    halo
 ) {
     if (!is.null(vertex_label_cex)) {
         label_cex <- vertex_label_cex
@@ -369,7 +372,8 @@ plot_simi <- function(
             label_cex,
             edge_color,
             edge_curved,
-            vertex_label_color
+            vertex_label_color,
+            halo
         )
     } else if (plot_type == 'tkplot') {
         plot_result <- tk_plot(

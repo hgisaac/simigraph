@@ -251,42 +251,40 @@ check_inf <- function(sparse) {
     sparse
 }
 
-check_word_parameter <- function(parameters, sparse, matrix_data) {
-    if ('word' %in% parameters) {
-        sparse <- graph_word(sparse, parameters$word)
-        col_sum <- colSums(sparse)
+check_word_parameter <- function(word, sparse, matrix_data) {
+    sparse <- graph_word(sparse, word)
+    col_sum <- colSums(sparse)
 
-        if (length(col_sum)) sparse <- sparse[, -which(col_sum == 0)]
+    if (length(col_sum)) sparse <- sparse[, -which(col_sum == 0)]
 
-        row_sum <- rowSums(sparse)
+    row_sum <- rowSums(sparse)
 
-        if (length(row_sum)) sparse <- sparse[-which(row_sum == 0),]
-        if (length(col_sum)) matrix_data <- matrix_data[, -which(col_sum == 0)]
-    }
+    if (length(row_sum)) sparse <- sparse[-which(row_sum == 0),]
+    if (length(col_sum)) matrix_data <- matrix_data[, -which(col_sum == 0)]
 
     list(sparse = sparse, matrix = matrix_data)
 }
 
-compute_similarity <- function(parameters, matrix_data) {
-    if (parameters$method == 'cooc') {
+compute_similarity <- function(method, matrix_data) {
+    if (method == 'cooc') {
         sparse <- square_matrix(matrix_data)
 
-    } else if (parameters$method == 'Russel') {
+    } else if (method == 'Russel') {
         sparse <- proxy::simil(
             matrix_data,
-            method = parameters$method,
+            method = method,
             diag = TRUE,
             upper = TRUE,
             by_rows = FALSE
         )
 
-    } else if (parameters$method == 'binomial') {
+    } else if (method == 'binomial') {
         sparse <- binom_sim(matrix_data)
 
     } else {
         sparse <- proxy::simil(
             as.matrix(matrix_data),
-            method = parameters$method,
+            method = method,
             diag = TRUE,
             upper = TRUE,
             by_rows = FALSE
@@ -296,27 +294,6 @@ compute_similarity <- function(parameters, matrix_data) {
     as.matrix(stats::as.dist(sparse, diag = TRUE, upper = TRUE))
 }
 
-check_coeff_tv <- function(parameters) {
-    if (parameters$coeff_tv && parameters$sfromchi) {
-        parameters$coeff_tv <- NULL
-        parameters$minmax_eff <- c(parameters$tvmin, parameters$tvmax)
-    } else {
-        parameters$minmax_eff <- NULL
-    }
-
-    parameters
-}
-
-check_vcex <- function(parameters) {
-    if (parameters$vcex || parameters$cex_from_chi) {
-        parameters$vcex_minmax <- c(parameters$vcex_min, parameters$vcex_max)
-    } else {
-        parameters$vcex_minmax <- NULL
-    }
-
-    parameters
-}
-
 #' Generate similitude graph
 #' 
 #' @param parameters list
@@ -324,72 +301,99 @@ check_vcex <- function(parameters) {
 #' @return list of objects
 #' 
 #' @export
-generate_graph <- function(parameters, dtm) {
-    parameters <- check_coeff_tv(parameters)
-    parameters <- check_vcex(parameters)
-
-    if (parameters$keep_coord) {
-        parameters$coords <- load_coords()
+generate_graph <- function(
+    dtm,
+    method = 'cooc',
+    seuil = NULL,
+    plot_type = 'nplot',
+    layout_type = 'frutch',
+    max_tree = TRUE,
+    coeff_vertex = NULL,
+    coeff_edge_range = NULL,
+    minmax_eff = NULL,
+    vcex_minmax = NULL,
+    cex = 1.0,
+    coords = NULL,
+    communities = NULL,
+    keep_coord = FALSE,
+    sfromchi = FALSE,
+    cex_from_chi = FALSE,
+    word = NULL
+) {
+    if (coeff_vertex && sfromchi) {
+        coeff_vertex <- NULL
     } else {
-        parameters$coords <- NULL
+        minmax_eff <- NULL
+    }
+    
+    if (cex_from_chi && is.null(vcex_minmax)) {
+        stop('A range of value to vcex_minmax is necessary.')
     }
 
-    sparse <- compute_similarity(parameters, dtm)
+    if (keep_coord) {
+        coords <- load_coords()
+    }
+
+    sparse <- compute_similarity(method, dtm)
     sparse <- check_inf(sparse)
 
-    valid_data <- check_word_parameter(parameters, sparse, dtm)
+    if (!is.null(word)) {
+        valid_data <- check_word_parameter(word, sparse, dtm)
+        sparse <- valid_data$sparse
+        dtm <- valid_data$matrix
+    }
 
-    eff <- colSums(as.matrix(valid_data$matrix))
+    eff <- colSums(as.matrix(dtm))
+    simi_graph <- create_graph(sparse)
 
-    simi_graph <- create_graph(valid_data$sparse)
-
-    if (parameters$max_tree) {
-        simi_graph <- define_weights(simi_graph, parameters$method)
+    if (max_tree) {
+        simi_graph <- define_weights(simi_graph, method)
     }
     
     simplified_graph <- simplify_graph(
         simi_graph,
-        parameters$seuil,
-        valid_data$sparse, eff
+        seuil,
+        sparse,
+        eff
     )
     
     graph_labels <- get_labels(
         simplified_graph$simi_graph,
-        parameters$seuil,
-        parameters$method
+        seuil,
+        method
     )
     
     edge_width <- define_width(
         simplified_graph$simi_graph,
-        parameters$coeff_edge_range
+        coeff_edge_range
     )
 
-    if (!is.null(parameters$minmax_eff[1])) {
-        coeff.vertex <- norm_vec(
+    if (!is.null(minmax_eff)) {
+        coeff_vertex <- norm_vec(
             eff,
-            parameters$minmax_eff[1],
-            parameters$minmax_eff[2]
+            minmax_eff[1],
+            minmax_eff[2]
         )
     }
 
-    if (!is.null(parameters$vcex_minmax[1])) {
+    if (!is.null(vcex_minmax)) {
         cex <- norm_vec(
             eff,
-            parameters$vcex_minmax[1],
-            parameters$vcex_minmax[2]
+            vcex_minmax[1],
+            vcex_minmax[2]
         )
     }
 
     graph_layout <- define_layout(
-        parameters$plot_type,
-        parameters$layout,
-        parameters$coords,
+        plot_type,
+        layout_type,
+        coords,
         simplified_graph$simi_graph
     )
 
-    if (!is.null(parameters$communities)) {
-        parameters$communities <- define_communities(
-            parameters$communities,
+    if (!is.null(communities)) {
+        communities <- define_communities(
+            communities,
             simplified_graph$simi_graph
         )
     }
@@ -397,14 +401,13 @@ generate_graph <- function(parameters, dtm) {
     list(
         graph = simplified_graph$simi_graph,
         mat_eff = simplified_graph$mat_eff,
-        eff = parameters$coeff_tv, # coeff_vertex
-        mat = valid_data$matrix,
-        halo = parameters$halo,
+        eff = coeff_vertex,
+        mat = dtm,
         layout = graph_layout,
         v_label = graph_labels$vertices,
         we_width = edge_width,
         we_label = graph_labels$edges,
-        communities = parameters$communities,
+        communities = communities,
         label_cex = cex,
         elim = simplified_graph$elim
     )

@@ -32,7 +32,22 @@ parameters <- list(
 )
 
 result <- preprocess('../../data_test/corpus.csv', 'corpus', min_docfreq = 4)
-graph_simi <- generate_graph(parameters, result$dtm)
+graph_simi <- generate_graph(
+    result$dtm,
+    method = 'cooc',
+    keep_coord = FALSE,
+    seuil = 0.01,
+    plot_type = 'nplot',
+    layout_type = 'frutch',
+    max_tree = TRUE,
+    coeff_vertex = 0,
+    coeff_edge_range = c(1, 10),
+    sfromchi = FALSE,
+    minmax_eff = c(5, 30),
+    vcex_minmax = c(1.0, 2.5),
+    cex = 1.0,
+    communities = NULL
+)
 
 test_that('generate_graph returns list', {
     expect_type(graph_simi, 'list')
