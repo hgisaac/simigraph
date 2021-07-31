@@ -24,50 +24,6 @@ open_file_graph <- function (
 	}
 }
 
-apply_chd <- function(parameters, dm) {
-    et <- list()
-
-    for (index in seq_along(parameters$listet)) {
-        line_et <- parameters$listet[[index]]
-        line_et <- line_et + 1
-
-        et[[index + 1]] <- paste(line_et, collapse = ',')
-    }
-
-    unetoile <- paste(parameters$selected_stars, collapse = "','")
-    
-    fsum <- NULL
-    rs <- rowSums(dm)
-    
-    for (i in 1:length(unetoile)) {
-        print(unetoile[i])
-        tosum <- et[[i]]
-
-        if (length(tosum) > 1) {
-            fsum <- cbind(fsum, colSums(dm[tosum, ]))
-        } else {
-            fsum <- cbind(fsum, dm[tosum, ])
-        }
-    }
-
-    source('~/iramuteq-0.7-alpha2/Rscripts/chdfunct.r')
-
-    lex <- AsLexico2(fsum, chip = TRUE)
-    dcol <- apply(lex[[4]], 1, which_max)
-    toblack <- apply(lex[[4]], 1, max)
-    gcol <- rainbow(length(unetoile))
-    
-    vertex_label_color <- gcol[dcol]
-    vertex_label_color[which(toblack <= 3.84)] <- 'black'
-    
-    leg <- list(unetoile = unetoile, gcol = gcol)
-    parameters$cols <- vertex_label_color
-    chi_vertex_size <- norm_vec(toblack, parameters$vcexmin,  parameters$vcexmax)
-    
-    list(to_black = toblack, vertex_label_color = vertex_label_color, leg = leg,
-        chi_vertex_size = chi_vertex_size)
-}
-
 apply_plot_definitions <- function(
     label_cex,
     eff,
@@ -142,25 +98,20 @@ plot_graph <- function(
     bg = 'white',
     tmp_chi = NULL,
     vertex_color = c(255, 0, 0, 255),
-    bystar = FALSE
+    variable = NULL
 ) {
-    if (bystar) {
-        chd_definition <- apply_chd(parameters, matrix_data)
-        vertex_label_color <- chd_definition$vertex_label_color
-        leg <- chd_definition$leg
+    if (!is.null(variable)) {
+        mapping <- map_variables(graph_simi$mat, variable, vcex_minmax)
+        leg <- list(variables = mapping$var_values, colors = mapping$colors)
 
-        if (parameters$cex_from_chi) {
-            vertex_label_cex <- chd_definition$chi_vertex_size
+        if (cex_from_chi) {
+            vertex_label_cex <- mapping$labels
         } else {
-            vertex_label_cex <- parameters$cex
+            vertex_label_cex <- cex
         }
 
-        if (parameters$sfromchi) {
-            vertex_size <- norm_vec(
-                chd_definition$to_black,
-                parameters$tvmin,
-                parameters$tvmax
-            )
+        if (sfromchi) {
+            vertex_size <- get_vertices_chi(graph_simi$mat, vcex_minmax)
         } else {
             vertex_size <- NULL
         }
@@ -237,6 +188,104 @@ plot_graph <- function(
     }
     
     plot_result
+}
+
+map_variables <- function(dtm, variable, vcex_minmax) {
+    doc_vars <- quanteda::docvars(dtm, variable)
+    var_values <- unique(doc_vars)
+    uces_variables <- list()
+    
+    for (index in seq_along(var_values)) {
+        uces_variables[index] <- paste(
+            which(doc_vars %in% var_values[index]),
+            collapse = ','
+        )
+    }
+    
+    fsum <- NULL
+    
+    for (index in seq_along(var_values)) {
+        tosum <- strsplit(uces_variables[[index]], ',')[[1]]
+
+        if (length(tosum) > 1) {
+            fsum <- cbind(fsum, Matrix::colSums(dtm[tosum, ]))
+        } else {
+            fsum <- cbind(fsum, dtm[tosum, ])
+        }
+    }
+
+    labels <- map_labels(fsum, vcex_minmax)
+    colors <- map_colors(fsum, var_values)
+
+    list(labels = labels, colors = colors, var_values = var_values)
+}
+
+map_colors <- function(matrix_sum, variables) {
+    # Create a vector of max chi values form matrix
+    vertices_chi <- calculate_matrix_chi(matrix_sum)
+    max_locations <- apply(vertices_chi, 1, which.max)
+
+    # Query the color pallet from max chi values
+    color_pallet <- RColorBrewer::brewer.pal(length(variables), 'Set1')
+    vertices_color <- color_pallet[max_locations]
+
+    # Assign lower chi vertices to 'non-variable'
+    max_vertices <- apply(vertices_chi, 1, max)
+    vertices_color[which(max_vertices <= 3.18)] <- 'black'
+}
+
+map_labels <- function(matrix_sum, vcex_minmax) {
+    chi_matrix <- calculate_matrix_chi(matrix_sum)
+    max_row <- apply(chi_matrix, 1, max)
+    norm_vec(max_row, vcex_minmax[1],  vcex_minmax[2])
+}
+
+calculate_matrix_chi <- function(matrix_data) {
+    matrix(
+        sapply(seq_along(matrix_data), function(x) {
+            result_matrix <- matrix(0, 2, 2)
+            row_sum_matrix <- column_sum_matrix <- matrix_data
+            
+            row_sum_matrix[, 1:ncol(matrix_data)] <- rowSums(matrix_data)
+            row_sum_matrix <- row_sum_matrix - matrix_data
+
+            column_sum_matrix[1:nrow(matrix_data),] <- colSums(matrix_data)
+            column_sum_matrix <- column_sum_matrix - matrix_data
+
+            total_sum_matrix <- matrix(
+                sum(rowSums(matrix_data)),
+                nrow(matrix_data),
+                ncol(matrix_data)
+            )
+            total_sum_matrix <- total_sum_matrix - row_sum_matrix - column_sum_matrix
+
+            result_matrix[1, 1] <- matrix_data[x]
+            result_matrix[1, 2] <- row_sum_matrix[x]
+            result_matrix[2, 1] <- column_sum_matrix[x]
+            result_matrix[2, 2] <- total_sum_matrix[x]
+
+            chi_result <- chi_sq(result_matrix)
+            
+            if (is.na(chi_result$p_value)) {
+                chi_result$p_value <- 1
+                chi_result$statistic <- 0
+            }
+
+            if (result_matrix[1, 1] > chi_result$expected[1, 1]) {
+                chi_result$statistic
+            } else {
+                0
+            }
+        }),
+        ncol = ncol(matrix_data)
+    )
+}
+
+chi_sq <- function(x) {
+    expected <- outer(rowSums(x), colSums(x)) / sum(x)
+    statistic <- sum(abs(x - expected) ^ 2 / expected)
+    p_value <- stats::pchisq(statistic, 1, lower.tail = FALSE)
+    list(statistic = statistic, expected = expected, p_value = p_value)
 }
 
 define_vertex_label_color <- function(vertex_label_cex, vertex_label_color) {
@@ -341,7 +390,7 @@ n_plot <- function(
     if (!is.null(leg)) {
         par(mar = c(0, 0, 0, 0))
         plot(0, axes = FALSE, pch = '')
-        legend(x = 'center', leg$unetoile, fill = leg$gcol)
+        legend(x = 'center', leg$variables, fill = leg$colors)
     }
     
     dev.off()

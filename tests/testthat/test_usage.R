@@ -63,7 +63,8 @@ test_that('plot_graph returns double', {
             sfromchi = FALSE,
             minmax_eff = c(5, 30),
             vcex_minmax = c(1.0, 2.5),
-            filename = '../../images_test/graph_simi_refac.png'
+            filename = '../../images_test/graph_simi_refac.png',
+            variable = 'codinome'
         ),
         'double'
     )
