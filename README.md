@@ -1,18 +1,10 @@
 # simigraph
 
-Description.
+This package provides text similitude analysis and graph visualization.
 
 # Installation
 
-Installation.
-
-## From source
-
-```R
-install.packages('devtools')
-
-devtools::install()
-```
+Open the R terminal and install the `devtools` package with `install.packages('devtools')`. Then, install the simigraph package itself with `devtools::install_github('hgisaac/simigraph')`.
 
 # Credits
 
