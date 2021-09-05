@@ -1,29 +1,3 @@
-# a, b, c, and d are the counts of all (TRUE, TRUE), (TRUE, FALSE), (FALSE, TRUE), and (FALSE, FALSE)
-# n <- a + b + c + d = nrow(x)
-
-# jaccard a, b, c   a / (a + b + c)
-# Kulczynski1 a, b, c   a / (b + c)
-# Kulczynski2 a, b, c   [a / (a + b) + a / (a + c)] / 2
-# Mountford a, b, c    2a / (ab + ac + 2bc)
-# Fager, McGowan a, b, c   a / sqrt((a + b)(a + c)) - 1 / 2 sqrt(a + c)
-# Russel, Rao a (a/n)
-# Dice, Czekanowski, Sorensen a, b, c   2a / (2a + b + c)
-# Mozley, Margalef a, b, c  an / (a + b)(a + c)
-# Ochiai a, b, c  a / sqrt[(a + b)(a + c)]
-# Simpson a, b, c   a / min{(a + b), (a + c)}
-# Braun-Blanquet a, b, c  a / max{(a + b), (a + c)}
-
-# Simple matching
-# Sokal/Michener a, b, c, d, ((a + d) /n)
-# Hamman, a, b, c, d, ([a + d] - [b + c]) / n
-# Faith , a, b, c, d, (a + d/2) / n
-# Tanimoto, Rogers a, b, c, d, (a + d) / (a + 2b + 2c + d)
-# Phi  a, b, c, d   (ad - bc) / sqrt[(a + b)(c + d)(a + c)(b + d)]
-# Stiles a, b, c, d  log(n(|ad-bc| - 0.5n)^2 / [(a + b)(c + d)(a + c)(b + d)])
-# Michael   a, b, c, d   4(ad - bc) / [(a + d)^2 + (b + c)^2]
-# Yule a, b, c, d  (ad - bc) / (ad + bc)
-# Yule2  a, b, c, d  (sqrt(ad) - sqrt(bc)) / (sqrt(ad) + sqrt(bc))
-
 create_graph <- function(data_matrix, mode = 'lower', weighted = TRUE, ...) {
     igraph::graph_from_adjacency_matrix(
         data_matrix,
@@ -298,8 +272,8 @@ compute_similarity <- function(method, matrix_data) {
 #' 
 #' @param parameters list
 #' @param analysis_path of data
-#' @return list of objects
 #' 
+#' @return list of objects
 #' @export
 generate_graph <- function(
     dtm,
