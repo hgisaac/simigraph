@@ -1,3 +1,15 @@
+#' Preprocess corpus
+#'
+#' @param data 
+#' @param column 
+#' @param min_segment_size 
+#' @param doc_id 
+#' @param segment_size 
+#' @param language 
+#' @param ... 
+#'
+#' @return list
+#' @export
 preprocess <- function(
     data,
     column,

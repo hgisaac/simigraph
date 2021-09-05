@@ -46,7 +46,7 @@ graph_simi <- generate_graph(
     minmax_eff = c(5, 30),
     vcex_minmax = c(1.0, 2.5),
     cex = 1.0,
-    communities = NULL
+    communities = 1
 )
 
 test_that('generate_graph returns list', {
@@ -64,6 +64,8 @@ test_that('plot_graph returns double', {
             minmax_eff = c(5, 30),
             vcex_minmax = c(1.0, 2.5),
             filename = '../../images_test/graph_simi_refac.png',
+            communities = graph_simi$communities,
+            halo = TRUE,
             variable = 'codinome'
         ),
         'double'

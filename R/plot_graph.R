@@ -34,7 +34,6 @@ apply_plot_definitions <- function(
     sfromchi,
     minmax_eff
 ) {
-    vertex_label_color <- 'black'
     chi_vertex_size <- 1
 
     if (!is.null(tmp_chi)) {
@@ -67,11 +66,41 @@ apply_plot_definitions <- function(
 
     list(
         vertex_size = vertex_size,
-        chi_vertex_size = chi_vertex_size,
-        vertex_label_color = vertex_label_color
+        chi_vertex_size = chi_vertex_size
     )
 }
 
+#' Plot the similitude graph
+#'
+#' @param graph_simi 
+#' @param coeff_vertex 
+#' @param cex_from_chi 
+#' @param cex 
+#' @param sfromchi 
+#' @param minmax_eff 
+#' @param vcex_minmax 
+#' @param halo 
+#' @param plot_type 
+#' @param filename 
+#' @param communities 
+#' @param edge_color 
+#' @param vertex_label_color 
+#' @param vertex_label_cex 
+#' @param vertex_size 
+#' @param leg 
+#' @param width 
+#' @param height 
+#' @param alpha 
+#' @param cexalpha 
+#' @param edge_curved 
+#' @param svg 
+#' @param bg 
+#' @param tmp_chi 
+#' @param vertex_color 
+#' @param variable 
+#'
+#' @return plot result
+#' @export
 plot_graph <- function(
     graph_simi,
     coeff_vertex,
@@ -102,7 +131,8 @@ plot_graph <- function(
 ) {
     if (!is.null(variable)) {
         mapping <- map_variables(graph_simi$mat, variable, vcex_minmax)
-        leg <- list(variables = mapping$var_values, colors = mapping$colors)
+        vertex_label_color <- mapping$colors$vertices
+        leg <- list(variables = mapping$var_values, colors = mapping$colors$variables)
 
         if (cex_from_chi) {
             vertex_label_cex <- mapping$labels
@@ -113,7 +143,7 @@ plot_graph <- function(
         if (sfromchi) {
             vertex_size <- get_vertices_chi(graph_simi$mat, vcex_minmax)
         } else {
-            vertex_size <- NULL
+            vertex_size <- 0
         }
     } else {
         plot_definitions <- apply_plot_definitions(
@@ -129,14 +159,12 @@ plot_graph <- function(
         vertex_size <- plot_definitions$vertex_size
         leg <- NULL
         vertex_label_cex <- plot_definitions$chi_vertex_size
-        vertex_label_color <- plot_definitions$vertex_label_color
     }
 
     if (!is.null(communities)) {
         colm <- rainbow(length(communities))
 
         if (vertex_size != 0 || halo) {
-            vertex_label_color <- 'black'
             vertex_color <- colm[igraph::membership(communities)]
         } else {
             vertex_label_color <- colm[igraph::membership(communities)]
@@ -226,12 +254,14 @@ map_colors <- function(matrix_sum, variables) {
     max_locations <- apply(vertices_chi, 1, which.max)
 
     # Query the color pallet from max chi values
-    color_pallet <- RColorBrewer::brewer.pal(length(variables), 'Set1')
+    color_pallet <- rainbow(length(variables))
     vertices_color <- color_pallet[max_locations]
 
     # Assign lower chi vertices to 'non-variable'
     max_vertices <- apply(vertices_chi, 1, max)
     vertices_color[which(max_vertices <= 3.18)] <- 'black'
+    
+    list(variables = color_pallet, vertices = vertices_color)
 }
 
 map_labels <- function(matrix_sum, vcex_minmax) {
