@@ -36,9 +36,15 @@ preprocess <- function(
 }
 
 create_corpus <- function(data, column) {
-    if (is.character(data) && endsWith(data, '.csv')) {
-        data <- read.csv(data)
+    if (is.character(data)) {
+        tryCatch(
+            data <- read.csv(data),
+            error = function(error) {
+                stop(error)
+            }
+        )
     }
+    
     quanteda::corpus(data, text_field = column)
 }
 

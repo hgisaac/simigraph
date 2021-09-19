@@ -270,8 +270,23 @@ compute_similarity <- function(method, matrix_data) {
 
 #' Generate similitude graph
 #' 
-#' @param parameters list
-#' @param analysis_path of data
+#' @param dtm
+#' @param method
+#' @param seuil
+#' @param plot_type
+#' @param layout_type
+#' @param max_tree
+#' @param coeff_vertex
+#' @param coeff_edge_range
+#' @param minmax_eff
+#' @param vcex_minmax
+#' @param cex
+#' @param coords
+#' @param communities
+#' @param keep_coord
+#' @param sfromchi
+#' @param cex_from_chi
+#' @param word
 #' 
 #' @return list of objects
 #' @export
