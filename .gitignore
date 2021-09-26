@@ -1,3 +1,7 @@
 images_test
 data_test
 iramuteq_results
+
+# jamovi
+build
+*.jmo

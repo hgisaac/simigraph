@@ -1,0 +1,21 @@
+---
+title: simigraph
+name: simigraph
+version: 0.1.0
+jms: '1.0'
+authors:
+  - Hugo Isaac
+maintainer: Hugo Isaac <hugo_iar@live.com>
+date: '2021-09-19'
+type: R
+description: A jamovi module which provides similitude analysis and graph visualization.
+analyses:
+  - title: Similitude Analysis
+    name: simi
+    ns: simigraph
+    menuGroup: simigraph
+    menuTitle: Similitude Analysis
+usesNative: true
+minApp: 1.0.8
+
+...

@@ -1,0 +1,9 @@
+---
+name: simi
+title: Similitude Analysis
+jrs:   '1.1'
+items:
+  - name: result
+    title: Result
+    type: Preformatted
+...
