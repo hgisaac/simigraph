@@ -3,7 +3,7 @@ simiClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     inherit = simiBase,
     private = list(
         .run = function() {
-            if (is.null(self$data)) return()
+            if (length(self$data) == 0) return()
 
             result <- preprocess(self$data, 'corpus', min_docfreq = 4)
             
