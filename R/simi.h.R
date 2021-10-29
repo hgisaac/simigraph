@@ -23,7 +23,7 @@ simiResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "simiResults",
     inherit = jmvcore::Group,
     active = list(
-        result = function() private$.items[["result"]]),
+        plot = function() private$.items[["plot"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -31,10 +31,13 @@ simiResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="",
                 title="Similitude Analysis")
-            self$add(jmvcore::Preformatted$new(
+            self$add(jmvcore::Image$new(
                 options=options,
-                name="result",
-                title="Result"))}))
+                name="plot",
+                title="Plot",
+                width=600,
+                height=600,
+                renderFun=".plot"))}))
 
 simiBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "simiBase",
@@ -62,7 +65,7 @@ simiBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param data .
 #' @return A results object containing:
 #' \tabular{llllll}{
-#'   \code{results$result} \tab \tab \tab \tab \tab a preformatted \cr
+#'   \code{results$plot} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' @export
