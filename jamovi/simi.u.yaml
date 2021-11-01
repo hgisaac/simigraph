@@ -3,4 +3,27 @@ title: Similitude Analysis
 jus: '3.0'
 stage: 0
 compilerMode: tame
-children: []
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: text
+        children:
+          - type: VariablesListBox
+            name: text
+            maxItemCount: 1
+            isTarget: true
+  
+  - type: CollapseBox
+    collapsed: false
+    label: Analysis
+    margin: large
+    children:
+      - type: Label
+        label: Preprocessing
+        children:
+          - type: TextBox
+            name: segsize
+            format: number

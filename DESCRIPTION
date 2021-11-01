@@ -3,7 +3,7 @@ Title: Similitude analysis and graph visualization
 Version: 0.1.0
 Authors@R: person("Hugo", "Romero", email="hugo_iar@live.com", role=c('aut', 'cre'))
 Description: Similitude analysis and graph visualization
-Depends: R (>= 4.0.5)
+Depends: R (>= 4.0.2)
 License: GNU GPLv3
 Encoding: UTF-8
 LazyData: true

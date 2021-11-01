@@ -5,7 +5,9 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "simiOptions",
     inherit = jmvcore::Options,
     public = list(
-        initialize = function( ...) {
+        initialize = function(
+            text = NULL,
+            segsize = 0, ...) {
 
             super$initialize(
                 package="simigraph",
@@ -13,10 +15,23 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 requiresData=TRUE,
                 ...)
 
+            private$..text <- jmvcore::OptionVariable$new(
+                "text",
+                text)
+            private$..segsize <- jmvcore::OptionInteger$new(
+                "segsize",
+                segsize,
+                default=0)
 
+            self$.addOption(private$..text)
+            self$.addOption(private$..segsize)
         }),
-    active = list(),
-    private = list()
+    active = list(
+        text = function() private$..text$value,
+        segsize = function() private$..segsize$value),
+    private = list(
+        ..text = NA,
+        ..segsize = NA)
 )
 
 simiResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -63,6 +78,8 @@ simiBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'
 #' 
 #' @param data .
+#' @param text .
+#' @param segsize .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$plot} \tab \tab \tab \tab \tab an image \cr
@@ -70,17 +87,23 @@ simiBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'
 #' @export
 simi <- function(
-    data) {
+    data,
+    text,
+    segsize = 0) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("simi requires jmvcore to be installed (restart may be required)")
 
+    if ( ! missing(text)) text <- jmvcore::resolveQuo(jmvcore::enquo(text))
     if (missing(data))
         data <- jmvcore::marshalData(
-            parent.frame())
+            parent.frame(),
+            `if`( ! missing(text), text, NULL))
 
 
-    options <- simiOptions$new()
+    options <- simiOptions$new(
+        text = text,
+        segsize = segsize)
 
     analysis <- simiClass$new(
         options = options,
