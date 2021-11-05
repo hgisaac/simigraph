@@ -5,23 +5,42 @@ simiClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         .run = function() {
             if (length(self$data) == 0) return()
 
-            result <- preprocess(self$data, 'corpus', min_docfreq = 4)
+            data <- self$data
+            data[[self$options$text]] <- as.character(
+                data[[self$options$text]]
+            )
+
+            result <- preprocess(
+                data,
+                self$options$text,
+                self$options$min_seg_size,
+                segment_size = self$options$seg_size,
+                language = self$options$language,
+                min_docfreq = self$options$min_docfreq
+            )
             
             graph_simi <- generate_graph(
                 result$dtm,
-                method = 'cooc',
-                keep_coord = FALSE,
-                seuil = 0.01,
+                method = self$options$method,
+                seuil = self$options$seuil,
                 plot_type = 'nplot',
-                layout_type = 'frutch',
-                max_tree = TRUE,
-                coeff_vertex = 0,
-                coeff_edge_range = c(1, 10),
-                sfromchi = FALSE,
-                minmax_eff = c(5, 30),
-                vcex_minmax = c(1.0, 2.5),
-                cex = 1.0,
-                communities = 1
+                layout_type = self$options$layout_type,
+                coeff_vertex = self$options$coeff_vertex,
+                coeff_edge_range = c(
+                    self$options$min_coeff_edge,
+                    self$options$max_coeff_edge
+                ),
+                sfromchi = self$options$size_from_chi,
+                minmax_eff = c(
+                    self$options$min_eff,
+                    self$options$max_eff
+                ),
+                vcex_minmax = c(
+                    self$options$min_vcex,
+                    self$options$max_vcex
+                ),
+                cex = self$options$cex,
+                communities = self$options$communities
             )
             
             self$results$plot$setState(graph_simi)
@@ -31,7 +50,7 @@ simiClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             if (is.null(graph_simi)) return(FALSE)
             
-            plot_result <- plot_graph(
+            plot_graph(
                 graph_simi,
                 coeff_vertex = 0,
                 cex_from_chi = FALSE,
@@ -39,13 +58,11 @@ simiClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 sfromchi = FALSE,
                 minmax_eff = c(5, 30),
                 vcex_minmax = c(1.0, 2.5),
-                filename = 'graph_simi_refac.png',
                 communities = graph_simi$communities,
-                halo = TRUE
-                #variable = 'codinome'
+                halo = TRUE,
+                variable = self$options$variable
             )
-            
-            print(plot_result)
+
             TRUE
         }
     )

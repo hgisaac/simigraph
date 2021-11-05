@@ -9,10 +9,18 @@ children:
     stretchFactor: 1
     children:
       - type: TargetLayoutBox
-        label: text
+        label: Text Corpus
         children:
           - type: VariablesListBox
             name: text
+            maxItemCount: 1
+            isTarget: true
+
+      - type: TargetLayoutBox
+        label: Column - Plotting
+        children:
+          - type: VariablesListBox
+            name: variable
             maxItemCount: 1
             isTarget: true
   
@@ -25,5 +33,71 @@ children:
         label: Preprocessing
         children:
           - type: TextBox
-            name: segsize
+            name: min_seg_size
+            format: number
+
+          - type: TextBox
+            name: seg_size
+            format: number
+
+          - type: ComboBox
+            name: language
+          
+          - type: TextBox
+            name: min_docfreq
+            format: number
+      
+      - type: Label
+        label: Processing
+        cell:
+          column: 1
+          row: 0
+        children:
+          - type: ComboBox
+            name: method
+          
+          - type: TextBox
+            name: seuil
+            format: number
+          
+          - type: ComboBox
+            name: layout_type
+          
+          - type: TextBox
+            name: coeff_vertex
+            format: number
+          
+          - type: TextBox
+            name: min_coeff_edge
+            format: number
+
+          - type: TextBox
+            name: max_coeff_edge
+            format: number
+
+          - type: CheckBox
+            name: size_from_chi
+
+          - type: TextBox
+            name: min_eff
+            format: number
+
+          - type: TextBox
+            name: max_eff
+            format: number
+
+          - type: TextBox
+            name: min_vcex
+            format: number
+
+          - type: TextBox
+            name: max_vcex
+            format: number
+
+          - type: TextBox
+            name: cex
+            format: number
+
+          - type: TextBox
+            name: communities
             format: number

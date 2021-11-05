@@ -356,8 +356,11 @@ n_plot <- function(
     edge_curved,
     vertex_label_color,
     halo
-) {    
-    open_file_graph(filename, width = width, height = height, svg = svg)
+) {
+    if (!is.null(filename)) {
+        open_file_graph(filename, width = width, height = height, svg = svg)
+    }
+    
     par(mar = c(2, 2, 2, 2), bg = bg, pch = ' ')
     
     if (!is.null(leg)) {
@@ -423,8 +426,7 @@ n_plot <- function(
         legend(x = 'center', leg$variables, fill = leg$colors)
     }
     
-    dev.off()
-    graph_simi$layout
+    if (!is.null(filename)) dev.off()
 }
 
 tk_plot <- function(

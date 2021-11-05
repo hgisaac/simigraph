@@ -7,7 +7,24 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     public = list(
         initialize = function(
             text = NULL,
-            segsize = 0, ...) {
+            variable = NULL,
+            min_seg_size = 0,
+            seg_size = 40,
+            language = "en",
+            min_docfreq = NULL,
+            method = "cooc",
+            seuil = 0.01,
+            layout_type = "frutch",
+            coeff_vertex = 0,
+            min_coeff_edge = 1,
+            max_coeff_edge = 10,
+            size_from_chi = FALSE,
+            min_eff = 5,
+            max_eff = 30,
+            min_vcex = 1,
+            max_vcex = 2.5,
+            cex = 1,
+            communities = 1, ...) {
 
             super$initialize(
                 package="simigraph",
@@ -18,20 +35,144 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..text <- jmvcore::OptionVariable$new(
                 "text",
                 text)
-            private$..segsize <- jmvcore::OptionInteger$new(
-                "segsize",
-                segsize,
+            private$..variable <- jmvcore::OptionVariable$new(
+                "variable",
+                variable)
+            private$..min_seg_size <- jmvcore::OptionInteger$new(
+                "min_seg_size",
+                min_seg_size,
                 default=0)
+            private$..seg_size <- jmvcore::OptionInteger$new(
+                "seg_size",
+                seg_size,
+                default=40)
+            private$..language <- jmvcore::OptionList$new(
+                "language",
+                language,
+                options=list(
+                    "en",
+                    "pt"),
+                default="en")
+            private$..min_docfreq <- jmvcore::OptionInteger$new(
+                "min_docfreq",
+                min_docfreq)
+            private$..method <- jmvcore::OptionList$new(
+                "method",
+                method,
+                options=list(
+                    "cooc"),
+                default="cooc")
+            private$..seuil <- jmvcore::OptionNumber$new(
+                "seuil",
+                seuil,
+                default=0.01)
+            private$..layout_type <- jmvcore::OptionList$new(
+                "layout_type",
+                layout_type,
+                options=list(
+                    "frutch"),
+                default="frutch")
+            private$..coeff_vertex <- jmvcore::OptionNumber$new(
+                "coeff_vertex",
+                coeff_vertex,
+                default=0)
+            private$..min_coeff_edge <- jmvcore::OptionInteger$new(
+                "min_coeff_edge",
+                min_coeff_edge,
+                default=1)
+            private$..max_coeff_edge <- jmvcore::OptionInteger$new(
+                "max_coeff_edge",
+                max_coeff_edge,
+                default=10)
+            private$..size_from_chi <- jmvcore::OptionBool$new(
+                "size_from_chi",
+                size_from_chi,
+                default=FALSE)
+            private$..min_eff <- jmvcore::OptionInteger$new(
+                "min_eff",
+                min_eff,
+                default=5)
+            private$..max_eff <- jmvcore::OptionInteger$new(
+                "max_eff",
+                max_eff,
+                default=30)
+            private$..min_vcex <- jmvcore::OptionNumber$new(
+                "min_vcex",
+                min_vcex,
+                default=1)
+            private$..max_vcex <- jmvcore::OptionNumber$new(
+                "max_vcex",
+                max_vcex,
+                default=2.5)
+            private$..cex <- jmvcore::OptionNumber$new(
+                "cex",
+                cex,
+                default=1)
+            private$..communities <- jmvcore::OptionInteger$new(
+                "communities",
+                communities,
+                default=1)
 
             self$.addOption(private$..text)
-            self$.addOption(private$..segsize)
+            self$.addOption(private$..variable)
+            self$.addOption(private$..min_seg_size)
+            self$.addOption(private$..seg_size)
+            self$.addOption(private$..language)
+            self$.addOption(private$..min_docfreq)
+            self$.addOption(private$..method)
+            self$.addOption(private$..seuil)
+            self$.addOption(private$..layout_type)
+            self$.addOption(private$..coeff_vertex)
+            self$.addOption(private$..min_coeff_edge)
+            self$.addOption(private$..max_coeff_edge)
+            self$.addOption(private$..size_from_chi)
+            self$.addOption(private$..min_eff)
+            self$.addOption(private$..max_eff)
+            self$.addOption(private$..min_vcex)
+            self$.addOption(private$..max_vcex)
+            self$.addOption(private$..cex)
+            self$.addOption(private$..communities)
         }),
     active = list(
         text = function() private$..text$value,
-        segsize = function() private$..segsize$value),
+        variable = function() private$..variable$value,
+        min_seg_size = function() private$..min_seg_size$value,
+        seg_size = function() private$..seg_size$value,
+        language = function() private$..language$value,
+        min_docfreq = function() private$..min_docfreq$value,
+        method = function() private$..method$value,
+        seuil = function() private$..seuil$value,
+        layout_type = function() private$..layout_type$value,
+        coeff_vertex = function() private$..coeff_vertex$value,
+        min_coeff_edge = function() private$..min_coeff_edge$value,
+        max_coeff_edge = function() private$..max_coeff_edge$value,
+        size_from_chi = function() private$..size_from_chi$value,
+        min_eff = function() private$..min_eff$value,
+        max_eff = function() private$..max_eff$value,
+        min_vcex = function() private$..min_vcex$value,
+        max_vcex = function() private$..max_vcex$value,
+        cex = function() private$..cex$value,
+        communities = function() private$..communities$value),
     private = list(
         ..text = NA,
-        ..segsize = NA)
+        ..variable = NA,
+        ..min_seg_size = NA,
+        ..seg_size = NA,
+        ..language = NA,
+        ..min_docfreq = NA,
+        ..method = NA,
+        ..seuil = NA,
+        ..layout_type = NA,
+        ..coeff_vertex = NA,
+        ..min_coeff_edge = NA,
+        ..max_coeff_edge = NA,
+        ..size_from_chi = NA,
+        ..min_eff = NA,
+        ..max_eff = NA,
+        ..min_vcex = NA,
+        ..max_vcex = NA,
+        ..cex = NA,
+        ..communities = NA)
 )
 
 simiResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -79,7 +220,24 @@ simiBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' 
 #' @param data .
 #' @param text .
-#' @param segsize .
+#' @param variable .
+#' @param min_seg_size .
+#' @param seg_size .
+#' @param language .
+#' @param min_docfreq .
+#' @param method .
+#' @param seuil .
+#' @param layout_type .
+#' @param coeff_vertex .
+#' @param min_coeff_edge .
+#' @param max_coeff_edge .
+#' @param size_from_chi .
+#' @param min_eff .
+#' @param max_eff .
+#' @param min_vcex .
+#' @param max_vcex .
+#' @param cex .
+#' @param communities .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$plot} \tab \tab \tab \tab \tab an image \cr
@@ -89,21 +247,57 @@ simiBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 simi <- function(
     data,
     text,
-    segsize = 0) {
+    variable,
+    min_seg_size = 0,
+    seg_size = 40,
+    language = "en",
+    min_docfreq,
+    method = "cooc",
+    seuil = 0.01,
+    layout_type = "frutch",
+    coeff_vertex = 0,
+    min_coeff_edge = 1,
+    max_coeff_edge = 10,
+    size_from_chi = FALSE,
+    min_eff = 5,
+    max_eff = 30,
+    min_vcex = 1,
+    max_vcex = 2.5,
+    cex = 1,
+    communities = 1) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("simi requires jmvcore to be installed (restart may be required)")
 
     if ( ! missing(text)) text <- jmvcore::resolveQuo(jmvcore::enquo(text))
+    if ( ! missing(variable)) variable <- jmvcore::resolveQuo(jmvcore::enquo(variable))
     if (missing(data))
         data <- jmvcore::marshalData(
             parent.frame(),
-            `if`( ! missing(text), text, NULL))
+            `if`( ! missing(text), text, NULL),
+            `if`( ! missing(variable), variable, NULL))
 
 
     options <- simiOptions$new(
         text = text,
-        segsize = segsize)
+        variable = variable,
+        min_seg_size = min_seg_size,
+        seg_size = seg_size,
+        language = language,
+        min_docfreq = min_docfreq,
+        method = method,
+        seuil = seuil,
+        layout_type = layout_type,
+        coeff_vertex = coeff_vertex,
+        min_coeff_edge = min_coeff_edge,
+        max_coeff_edge = max_coeff_edge,
+        size_from_chi = size_from_chi,
+        min_eff = min_eff,
+        max_eff = max_eff,
+        min_vcex = min_vcex,
+        max_vcex = max_vcex,
+        cex = cex,
+        communities = communities)
 
     analysis <- simiClass$new(
         options = options,

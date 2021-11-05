@@ -9,11 +9,102 @@ options:
     type: Data
 
   - name: text
-    title: Text Corpus
     type: Variable
   
-  - name: segsize
+  - name: variable
+    type: Variable
+
+  # Preprocessing
+  - name: min_seg_size
     title: Minimum Segments Size
     type: Integer
     default: 0
+  
+  - name: seg_size
+    title: Segments Size
+    type: Integer
+    default: 40
+  
+  - name: language
+    title: Language
+    type: List
+    options:
+      - en
+      - pt
+    default: en
+  
+  - name: min_docfreq
+    title: Minimum Document Frequency
+    type: Integer
+    default: 0
+  
+  # Processing
+  - name: method
+    title: Method
+    type: List
+    options:
+      - cooc
+    default: cooc
+  
+  - name: seuil
+    title: Seuil
+    type: Number
+    default: 0.01
+  
+  - name: layout_type
+    title: Layout Type
+    type: List
+    options:
+      - frutch
+    default: frutch
+  
+  - name: coeff_vertex
+    title: Coeff Vertex
+    type: Number
+    default: 0
+  
+  - name: min_coeff_edge
+    title: Minimum Coeff Edge
+    type: Integer
+    default: 1
+  
+  - name: max_coeff_edge
+    title: Maximum Coeff Edge
+    type: Integer
+    default: 10
+  
+  - name: size_from_chi
+    title: Size From Chi2
+    type: Bool
+    default: false
+
+  - name: min_eff
+    title: Minimum Eff
+    type: Integer
+    default: 5
+  
+  - name: max_eff
+    title: Maximum Eff
+    type: Integer
+    default: 30
+  
+  - name: min_vcex
+    title: Minimum Vertex Cex
+    type: Number
+    default: 1.0
+  
+  - name: max_vcex
+    title: Maximum Vertex Cex
+    type: Number
+    default: 2.5
+  
+  - name: cex
+    title: Cex
+    type: Number
+    default: 1.0
+  
+  - name: communities
+    title: Communities Type
+    type: Integer
+    default: 1
 ...
