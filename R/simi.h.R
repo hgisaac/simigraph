@@ -11,10 +11,9 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             min_seg_size = 0,
             seg_size = 40,
             language = "en",
-            min_docfreq = NULL,
+            min_docfreq = 0,
             method = "cooc",
             seuil = 0.01,
-            layout_type = "frutch",
             coeff_vertex = 0,
             min_coeff_edge = 1,
             max_coeff_edge = 10,
@@ -24,7 +23,10 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             min_vcex = 1,
             max_vcex = 2.5,
             cex = 1,
-            communities = 1, ...) {
+            communities = 1,
+            layout_type = "frutch",
+            cex_from_chi = FALSE,
+            halo = FALSE, ...) {
 
             super$initialize(
                 package="simigraph",
@@ -55,7 +57,8 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 default="en")
             private$..min_docfreq <- jmvcore::OptionInteger$new(
                 "min_docfreq",
-                min_docfreq)
+                min_docfreq,
+                default=0)
             private$..method <- jmvcore::OptionList$new(
                 "method",
                 method,
@@ -66,12 +69,6 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "seuil",
                 seuil,
                 default=0.01)
-            private$..layout_type <- jmvcore::OptionList$new(
-                "layout_type",
-                layout_type,
-                options=list(
-                    "frutch"),
-                default="frutch")
             private$..coeff_vertex <- jmvcore::OptionNumber$new(
                 "coeff_vertex",
                 coeff_vertex,
@@ -112,6 +109,20 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "communities",
                 communities,
                 default=1)
+            private$..layout_type <- jmvcore::OptionList$new(
+                "layout_type",
+                layout_type,
+                options=list(
+                    "frutch"),
+                default="frutch")
+            private$..cex_from_chi <- jmvcore::OptionBool$new(
+                "cex_from_chi",
+                cex_from_chi,
+                default=FALSE)
+            private$..halo <- jmvcore::OptionBool$new(
+                "halo",
+                halo,
+                default=FALSE)
 
             self$.addOption(private$..text)
             self$.addOption(private$..variable)
@@ -121,7 +132,6 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..min_docfreq)
             self$.addOption(private$..method)
             self$.addOption(private$..seuil)
-            self$.addOption(private$..layout_type)
             self$.addOption(private$..coeff_vertex)
             self$.addOption(private$..min_coeff_edge)
             self$.addOption(private$..max_coeff_edge)
@@ -132,6 +142,9 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..max_vcex)
             self$.addOption(private$..cex)
             self$.addOption(private$..communities)
+            self$.addOption(private$..layout_type)
+            self$.addOption(private$..cex_from_chi)
+            self$.addOption(private$..halo)
         }),
     active = list(
         text = function() private$..text$value,
@@ -142,7 +155,6 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         min_docfreq = function() private$..min_docfreq$value,
         method = function() private$..method$value,
         seuil = function() private$..seuil$value,
-        layout_type = function() private$..layout_type$value,
         coeff_vertex = function() private$..coeff_vertex$value,
         min_coeff_edge = function() private$..min_coeff_edge$value,
         max_coeff_edge = function() private$..max_coeff_edge$value,
@@ -152,7 +164,10 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         min_vcex = function() private$..min_vcex$value,
         max_vcex = function() private$..max_vcex$value,
         cex = function() private$..cex$value,
-        communities = function() private$..communities$value),
+        communities = function() private$..communities$value,
+        layout_type = function() private$..layout_type$value,
+        cex_from_chi = function() private$..cex_from_chi$value,
+        halo = function() private$..halo$value),
     private = list(
         ..text = NA,
         ..variable = NA,
@@ -162,7 +177,6 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..min_docfreq = NA,
         ..method = NA,
         ..seuil = NA,
-        ..layout_type = NA,
         ..coeff_vertex = NA,
         ..min_coeff_edge = NA,
         ..max_coeff_edge = NA,
@@ -172,7 +186,10 @@ simiOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..min_vcex = NA,
         ..max_vcex = NA,
         ..cex = NA,
-        ..communities = NA)
+        ..communities = NA,
+        ..layout_type = NA,
+        ..cex_from_chi = NA,
+        ..halo = NA)
 )
 
 simiResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -203,7 +220,7 @@ simiBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "simigraph",
                 name = "simi",
-                version = c(0,1,0),
+                version = c(0,2,0),
                 options = options,
                 results = simiResults$new(options=options),
                 data = data,
@@ -227,7 +244,6 @@ simiBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param min_docfreq .
 #' @param method .
 #' @param seuil .
-#' @param layout_type .
 #' @param coeff_vertex .
 #' @param min_coeff_edge .
 #' @param max_coeff_edge .
@@ -238,6 +254,9 @@ simiBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param max_vcex .
 #' @param cex .
 #' @param communities .
+#' @param layout_type .
+#' @param cex_from_chi .
+#' @param halo .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$plot} \tab \tab \tab \tab \tab an image \cr
@@ -251,10 +270,9 @@ simi <- function(
     min_seg_size = 0,
     seg_size = 40,
     language = "en",
-    min_docfreq,
+    min_docfreq = 0,
     method = "cooc",
     seuil = 0.01,
-    layout_type = "frutch",
     coeff_vertex = 0,
     min_coeff_edge = 1,
     max_coeff_edge = 10,
@@ -264,7 +282,10 @@ simi <- function(
     min_vcex = 1,
     max_vcex = 2.5,
     cex = 1,
-    communities = 1) {
+    communities = 1,
+    layout_type = "frutch",
+    cex_from_chi = FALSE,
+    halo = FALSE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("simi requires jmvcore to be installed (restart may be required)")
@@ -287,7 +308,6 @@ simi <- function(
         min_docfreq = min_docfreq,
         method = method,
         seuil = seuil,
-        layout_type = layout_type,
         coeff_vertex = coeff_vertex,
         min_coeff_edge = min_coeff_edge,
         max_coeff_edge = max_coeff_edge,
@@ -297,7 +317,10 @@ simi <- function(
         min_vcex = min_vcex,
         max_vcex = max_vcex,
         cex = cex,
-        communities = communities)
+        communities = communities,
+        layout_type = layout_type,
+        cex_from_chi = cex_from_chi,
+        halo = halo)
 
     analysis <- simiClass$new(
         options = options,

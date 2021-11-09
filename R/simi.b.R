@@ -52,14 +52,20 @@ simiClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             
             plot_graph(
                 graph_simi,
-                coeff_vertex = 0,
-                cex_from_chi = FALSE,
-                cex = 1.0,
-                sfromchi = FALSE,
-                minmax_eff = c(5, 30),
-                vcex_minmax = c(1.0, 2.5),
+                coeff_vertex = self$options$coeff_vertex,
+                cex_from_chi = self$options$cex_from_chi,
+                cex = self$options$cex,
+                sfromchi = self$options$size_from_chi,
+                minmax_eff = c(
+                    self$options$min_eff,
+                    self$options$max_eff
+                ),
+                vcex_minmax = c(
+                    self$options$min_vcex,
+                    self$options$max_vcex
+                ),
                 communities = graph_simi$communities,
-                halo = TRUE,
+                halo = self$options$halo,
                 variable = self$options$variable
             )
 
